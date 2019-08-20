@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT">
+  <meta name="keywords" content="os,">
 
 
 
@@ -79,16 +79,21 @@
 
 
 
-<meta name="description" content="不积跬步无以至千里">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Elvis">
-<meta property="og:url" content="http://yoursite.com/index.html">
+<meta name="description" content="本章知识汇总实模式下1MB寻址范围布局 什么叫“程序载入内存” 程序被加载器（软件或硬件）加载到内存的某个区域 CPU的cs:ip寄存器被指向这个程序的起始地址  主板上的物理内存不是cpu寻址的全部范围  地址总线宽度决定计算机在寻址上可以到达的疆域，寻址的内容不仅包括主板上的物理内存，虽然大部分的地址范围都被映射到了主板内存上，但cpu仍然需要保留一部分地址范围另做他用，包括映射保存BIOS代">
+<meta name="keywords" content="os">
+<meta property="og:type" content="article">
+<meta property="og:title" content="BIOS到MBR">
+<meta property="og:url" content="http://yoursite.com/2019/08/20/BIOS到MBR/index.html">
 <meta property="og:site_name" content="Elvis">
-<meta property="og:description" content="不积跬步无以至千里">
+<meta property="og:description" content="本章知识汇总实模式下1MB寻址范围布局 什么叫“程序载入内存” 程序被加载器（软件或硬件）加载到内存的某个区域 CPU的cs:ip寄存器被指向这个程序的起始地址  主板上的物理内存不是cpu寻址的全部范围  地址总线宽度决定计算机在寻址上可以到达的疆域，寻址的内容不仅包括主板上的物理内存，虽然大部分的地址范围都被映射到了主板内存上，但cpu仍然需要保留一部分地址范围另做他用，包括映射保存BIOS代">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/1.jpg">
+<meta property="og:image" content="http://yoursite.com/images/3.jpg">
+<meta property="og:updated_time" content="2019-08-20T09:31:08.141Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Elvis">
-<meta name="twitter:description" content="不积跬步无以至千里">
+<meta name="twitter:title" content="BIOS到MBR">
+<meta name="twitter:description" content="本章知识汇总实模式下1MB寻址范围布局 什么叫“程序载入内存” 程序被加载器（软件或硬件）加载到内存的某个区域 CPU的cs:ip寄存器被指向这个程序的起始地址  主板上的物理内存不是cpu寻址的全部范围  地址总线宽度决定计算机在寻址上可以到达的疆域，寻址的内容不仅包括主板上的物理内存，虽然大部分的地址范围都被映射到了主板内存上，但cpu仍然需要保留一部分地址范围另做他用，包括映射保存BIOS代">
+<meta name="twitter:image" content="http://yoursite.com/images/1.jpg">
 
 
 
@@ -118,13 +123,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/">
+  <link rel="canonical" href="http://yoursite.com/2019/08/20/BIOS到MBR/">
 
 
 
 
 
-  <title>Elvis</title>
+  <title>BIOS到MBR | Elvis</title>
   
 
 
@@ -143,8 +148,7 @@
     
   
 
-  <div class="container sidebar-position-left 
-  page-home">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -237,9 +241,9 @@
         <div class="content-wrap">
           <div id="content" class="content">
             
-  <section id="posts" class="posts-expand">
+
+  <div id="posts" class="posts-expand">
     
-      
 
   
 
@@ -269,9 +273,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/20/BIOS到MBR/" itemprop="url">BIOS到MBR</a></h1>
+          <h1 class="post-title" itemprop="name headline">BIOS到MBR</h1>
         
 
         <div class="post-meta">
@@ -354,9 +356,7 @@
       
 
       
-        
-          
-            <h3 id="本章知识汇总"><a href="#本章知识汇总" class="headerlink" title="本章知识汇总"></a>本章知识汇总</h3><h4 id="实模式下1MB寻址范围布局"><a href="#实模式下1MB寻址范围布局" class="headerlink" title="实模式下1MB寻址范围布局"></a>实模式下1MB寻址范围布局</h4><p><img src="/images/1.jpg" alt="1.jpg"></p>
+        <h3 id="本章知识汇总"><a href="#本章知识汇总" class="headerlink" title="本章知识汇总"></a>本章知识汇总</h3><h4 id="实模式下1MB寻址范围布局"><a href="#实模式下1MB寻址范围布局" class="headerlink" title="实模式下1MB寻址范围布局"></a>实模式下1MB寻址范围布局</h4><p><img src="/images/1.jpg" alt="1.jpg"></p>
 <h4 id="什么叫“程序载入内存”"><a href="#什么叫“程序载入内存”" class="headerlink" title="什么叫“程序载入内存”"></a>什么叫“程序载入内存”</h4><ol>
 <li>程序被加载器（软件或硬件）加载到内存的某个区域</li>
 <li>CPU的cs:ip寄存器被指向这个程序的起始地址</li>
@@ -395,8 +395,6 @@
 <li>&lt;&lt;操作系统真相还原&gt;&gt;</li>
 </ul>
 
-          
-        
       
     </div>
     
@@ -411,183 +409,36 @@
 
     <footer class="post-footer">
       
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/15/nginx通过用户ip限制访问权限/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="Jiang Fan">
-      <meta itemprop="description" content>
-      <meta itemprop="image" content="/uploads/avatar.png">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="Elvis">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2019/08/15/nginx通过用户ip限制访问权限/" itemprop="url">基于nginx access模块实现用户认证</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-15T16:30:13+08:00">
-                2019-08-15
-              </time>
-            
-
-            
-
-            
-          </span>
-
+        <div class="post-tags">
           
-            <span class="post-category">
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/服务端开发/" itemprop="url" rel="index">
-                    <span itemprop="name">服务端开发</span>
-                  </a>
-                </span>
-
-                
-                
-                  ， 
-                
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/服务端开发/nginx/" itemprop="url" rel="index">
-                    <span itemprop="name">nginx</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
+            <a href="/tags/os/" rel="tag"># os</a>
           
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
         </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <h2 id="实现方式："><a href="#实现方式：" class="headerlink" title="实现方式："></a>实现方式：</h2><ul>
-<li>HTTP Basic Authentication</li>
-<li>nginx转发到第三方认证服务</li>
-</ul>
-<h3 id="HTTP-Basic-Authentication"><a href="#HTTP-Basic-Authentication" class="headerlink" title="HTTP Basic Authentication"></a>HTTP Basic Authentication</h3><h4 id="使用示例"><a href="#使用示例" class="headerlink" title="使用示例"></a>使用示例</h4><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">server_name</span> nginx.learn.access;</span><br><span class="line">	<span class="attribute">error_log</span>  /etc/nginx/logs/error.log  <span class="literal">debug</span>;</span><br><span class="line">	<span class="attribute">root</span> /home/jiangfan/var/www/learn/<span class="number">57</span>/;</span><br><span class="line">	<span class="attribute">default_type</span> text/plain;</span><br><span class="line">	<span class="attribute">location</span> /auth_basic &#123;</span><br><span class="line">		<span class="attribute">satisfy</span> any;</span><br><span class="line">		<span class="attribute">auth_basic</span> <span class="string">"test auth_basic"</span>;</span><br><span class="line">		<span class="attribute">auth_basic_user_file</span> <span class="variable">$document_root</span>/auth.pass;</span><br><span class="line">		<span class="attribute">deny</span> all;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="示例说明"><a href="#示例说明" class="headerlink" title="示例说明"></a>示例说明</h4><ul>
-<li><p>auth_basic “test auth_basic” 通知客户端浏览器使用HTTP Basic Authentication协议进行用户名密码认证，浏览器将弹出认证输入框提示用户输入用户名和密码</p>
-</li>
-<li><p>auth_basic_user_file $document_root/auth.pass 指定nginx服务端保存用户名密码的路径,auth.pass文件</p>
-</li>
-</ul>
-<h3 id="nginx转发到第三方认证服务"><a href="#nginx转发到第三方认证服务" class="headerlink" title="nginx转发到第三方认证服务"></a>nginx转发到第三方认证服务</h3><h4 id="使用示例-1"><a href="#使用示例-1" class="headerlink" title="使用示例"></a>使用示例</h4><figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">	<span class="attribute">server_name</span> nginx.learn.access;</span><br><span class="line">	<span class="attribute">error_log</span>  /etc/nginx/logs/error.log  <span class="literal">debug</span>;</span><br><span class="line">	<span class="attribute">root</span> /home/jiangfan/var/www/learn/<span class="number">57</span>/;</span><br><span class="line">	<span class="attribute">default_type</span> text/plain;</span><br><span class="line">	<span class="attribute">location</span> /auth_basic &#123;</span><br><span class="line">		<span class="attribute">satisfy</span> any;</span><br><span class="line">		<span class="attribute">auth_basic</span> <span class="string">"test auth_basic"</span>;</span><br><span class="line">		<span class="attribute">auth_basic_user_file</span> <span class="variable">$document_root</span>/auth.pass;</span><br><span class="line">		<span class="attribute">deny</span> all;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">location</span> / &#123;</span><br><span class="line">		<span class="attribute">auth_request</span> /third_auth;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="attribute">location</span> = /third_auth &#123;</span><br><span class="line">		<span class="attribute">proxy_pass</span> http://127.0.0.1:8080/auth_upstream;</span><br><span class="line">		<span class="attribute">proxy_pass_request_body</span> <span class="literal">off</span>;</span><br><span class="line">    	<span class="attribute">proxy_set_header</span> Content-Length <span class="string">""</span>;</span><br><span class="line">    	<span class="attribute">proxy_set_header</span> X-Original-URI <span class="variable">$request_uri</span>;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="示例说明-1"><a href="#示例说明-1" class="headerlink" title="示例说明"></a>示例说明</h4><ul>
-<li>auth_request /third_auth指令将重定向到下面的location中，代理转发到第三方服务（<a href="http://127.0.0.1:8080/auth_upstream），然后将第三方认证服务的认证结果的状态吗返回给客户端" target="_blank" rel="noopener">http://127.0.0.1:8080/auth_upstream），然后将第三方认证服务的认证结果的状态吗返回给客户端</a></li>
-</ul>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
       
 
       
       
-        <div class="post-eof"></div>
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/15/nginx通过用户ip限制访问权限/" rel="next" title="基于nginx access模块实现用户认证">
+                <i class="fa fa-chevron-left"></i> 基于nginx access模块实现用户认证
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
       
     </footer>
   </div>
@@ -597,10 +448,11 @@
   </article>
 
 
-    
-  </section>
 
-  
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -608,6 +460,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -628,8 +484,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -691,6 +556,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#本章知识汇总"><span class="nav-number">1.</span> <span class="nav-text">本章知识汇总</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#实模式下1MB寻址范围布局"><span class="nav-number">1.1.</span> <span class="nav-text">实模式下1MB寻址范围布局</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#什么叫“程序载入内存”"><span class="nav-number">1.2.</span> <span class="nav-text">什么叫“程序载入内存”</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#主板上的物理内存不是cpu寻址的全部范围"><span class="nav-number">1.3.</span> <span class="nav-text">主板上的物理内存不是cpu寻址的全部范围</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BIOS是如何启动的"><span class="nav-number">1.4.</span> <span class="nav-text">BIOS是如何启动的</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#BIOS做了哪些重要的事情"><span class="nav-number">1.5.</span> <span class="nav-text">BIOS做了哪些重要的事情</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#MBR开头的sction-MBR-vstart-0x7c00"><span class="nav-number">1.6.</span> <span class="nav-text">MBR开头的sction MBR vstart=0x7c00</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#参考"><span class="nav-number">2.</span> <span class="nav-text">参考</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -824,6 +705,10 @@
   
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 
