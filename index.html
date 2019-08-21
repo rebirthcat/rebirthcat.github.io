@@ -252,6 +252,200 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/21/实模式/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/21/实模式/" itemprop="url">实模式</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-21T19:21:02+08:00">
+                2019-08-21
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/学习总结/" itemprop="url" rel="index">
+                    <span itemprop="name">学习总结</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="本章知识汇总"><a href="#本章知识汇总" class="headerlink" title="本章知识汇总"></a>本章知识汇总</h3><h4 id="什么是地址"><a href="#什么是地址" class="headerlink" title="什么是地址"></a>什么是地址</h4><ul>
+<li><p>地址只是数字，描述指令或数据在编译好的二进制文件中的位置，这个位置本质来讲其实就是偏移量</p>
+</li>
+<li><p>在汇编语言中如果文件开头使用section xxx vstart=yyy：后面的指令地址都是以yyy为基准进行编排，如果没有使用vstart指定编译地址的基准值，则编译好的二进制文件中的第一个字节的地址就是0x00000000（不管这第一个字节是指令还是数据）</p>
+</li>
+<li><p>假设纯二进制文件的前3个字节是一条指令，也即第一条指令，那么这条指令的地址就是0x00000000，如果使用vstart指定本文件的起始编排地址是yyy，那么这条指令的地址就是yyy。</p>
+</li>
+<li><p>如果第一条指令是3个字节长度，如果3个字节之后紧接着仍然是一条指令即第二条指令，那么这条指令的地址是0x00000000+3=0x00000003，如果指定编排的基准的地址vstart=yyy，那么第二条指令的地址就是yyy+3</p>
+</li>
+<li><p>下面是一段未指定起始编排地址的纯二进制文件的反汇编结果：</p>
+<p><img src="/images/4.jpg" alt="4.jpg"></p>
+<p>第一条指令B80000一共3个字节，那么第二条指令的地址就是0x0000003，第二条指令是8ED8一共2个字节，那么第三条指令的地址就是0x00000005，var dw 0x99表示定义一个双字的数据，值为99，那么代表这个99的变量的地址=vstart为基准+前面所有指令和数据的长度，由于vstart=0，前面5条指令的总大小为0xD，那么这个变量的地址就是0x0000000D。</p>
+</li>
+<li><p>结论：编译器给程序中各指令或数据编排的地址，本质上就是指令或数据相对于文件开头的偏移量+vstart伪指令指定的虚拟起始地址</p>
+</li>
+</ul>
+<h4 id="section和vstart的作用"><a href="#section和vstart的作用" class="headerlink" title="section和vstart的作用"></a>section和vstart的作用</h4><ul>
+<li>section是汇编语言的伪指令，称为节，表示在汇编代码中宣称一块区域</li>
+<li>只是为了让汇编程序员在手写汇编代码时能在逻辑上将程序划分成几个部分</li>
+<li>section 伪指令配合vstar表示命令编译器在为该section区域的汇编指令编译成二进制指令时，将该section下的第一条指令地址编排为vstart指定的值</li>
+</ul>
+<p><img src="/images/5.jpg" alt="5.jpg"></p>
+<ul>
+<li>第9行汇编代码使用伪指令section将10,11,12行的指令在逻辑上划分出来，但是只是用于汇编程序员进行代码的管理和分类，可以看到该行并产生任何机器码指令。</li>
+</ul>
+<ul>
+<li>第4行中mov ax section.data.start被预处理成mov ax 0x14，表示section.data.start表示data节在本文件中的真实偏移量</li>
+</ul>
+<ul>
+<li>第5行中的mov ax,$被编译程B8097C，表明在使用section code vstart=0x7c00后，第5行的当前指令所在的地址变成0x7c00+当前指令所在section的真是偏移量0x9（code节的第一条指令距离当前指令的长度）</li>
+</ul>
+<ul>
+<li>第6行中mov ax,[var1] 被编译成A10009，表明使用section data vstart=0x900后，var1变量的地址被编译器编排成了0x900+var1变量所在section的真实偏移量0x0    </li>
+</ul>
+<h4 id="实模式特点"><a href="#实模式特点" class="headerlink" title="实模式特点"></a>实模式特点</h4><ul>
+<li>实模式是指8086CPU的寻址方式，寄存器大小和指令用法等，即CPU在这一套环境下的工作方式</li>
+<li>实模式用到的寄存器默认都是16位</li>
+<li>8086cpu的地址总线是20位，即访问范围是1MB，即0x0000000~0xFFFFFFF，但是寄存器都是16位，访问20位地址访问的方法：段寄存器中的段基址左移4位+通用寄存器的16为偏移量。</li>
+</ul>
+<h4 id="实模式的缺陷"><a href="#实模式的缺陷" class="headerlink" title="实模式的缺陷"></a>实模式的缺陷</h4><ul>
+<li>安全问题：实模式下，用户程序和操作系统是同一特权级的程序，和操作系统平起平坐，用户程序可以执行具有破坏性的指令</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/21/nginx负载均衡策略/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -850,7 +1044,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-count">4</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
