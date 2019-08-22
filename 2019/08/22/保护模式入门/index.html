@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="os,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="实模式下的一些问题 实模式下操作系统和用户程序属于同一特权级，没有区别 逻辑地址就是物理地址 用户程序可以修改段基址，所有内存都能够访问到 20根地址线，最大内存1M, 太小 一次只能运行一个程序 实模式下采用 段基址：偏移 访问内存，x86 16位寄存器最大是2^16=64KB自己，显然当访问的内存超过64KB时，就要更改段基址  所以有了保护模式。 保护模式（32位）  地址线32根，最大内存">
+<meta name="keywords" content="os">
+<meta property="og:type" content="article">
+<meta property="og:title" content="保护模式入门">
+<meta property="og:url" content="http://yoursite.com/2019/08/22/保护模式入门/index.html">
+<meta property="og:site_name" content="Elvis">
+<meta property="og:description" content="实模式下的一些问题 实模式下操作系统和用户程序属于同一特权级，没有区别 逻辑地址就是物理地址 用户程序可以修改段基址，所有内存都能够访问到 20根地址线，最大内存1M, 太小 一次只能运行一个程序 实模式下采用 段基址：偏移 访问内存，x86 16位寄存器最大是2^16=64KB自己，显然当访问的内存超过64KB时，就要更改段基址  所以有了保护模式。 保护模式（32位）  地址线32根，最大内存">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/11.png">
+<meta property="og:image" content="http://yoursite.com/images/9.jpg">
+<meta property="og:image" content="http://yoursite.com/images/8.jpg">
+<meta property="og:image" content="http://yoursite.com/images/10.jpg">
+<meta property="og:image" content="http://yoursite.com/images/12.jpg">
+<meta property="og:updated_time" content="2019-08-22T05:04:01.086Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="保护模式入门">
+<meta name="twitter:description" content="实模式下的一些问题 实模式下操作系统和用户程序属于同一特权级，没有区别 逻辑地址就是物理地址 用户程序可以修改段基址，所有内存都能够访问到 20根地址线，最大内存1M, 太小 一次只能运行一个程序 实模式下采用 段基址：偏移 访问内存，x86 16位寄存器最大是2^16=64KB自己，显然当访问的内存超过64KB时，就要更改段基址  所以有了保护模式。 保护模式（32位）  地址线32根，最大内存">
+<meta name="twitter:image" content="http://yoursite.com/images/11.png">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/08/22/保护模式入门/">
+
+
+
+
+
+  <title>保护模式入门 | Elvis</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Elvis</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/22/保护模式入门/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">保护模式入门</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-22T12:40:33+08:00">
+                2019-08-22
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/学习总结/" itemprop="url" rel="index">
+                    <span itemprop="name">学习总结</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="实模式下的一些问题"><a href="#实模式下的一些问题" class="headerlink" title="实模式下的一些问题"></a>实模式下的一些问题</h3><ol>
+<li>实模式下操作系统和用户程序属于同一特权级，没有区别</li>
+<li>逻辑地址就是物理地址</li>
+<li>用户程序可以修改段基址，所有内存都能够访问到</li>
+<li>20根地址线，最大内存1M, 太小</li>
+<li>一次只能运行一个程序</li>
+<li>实模式下采用 段基址：偏移 访问内存，x86 16位寄存器最大是2^16=64KB自己，显然当访问的内存超过64KB时，就要更改段基址</li>
+</ol>
+<p>所以有了保护模式。</p>
+<p>保护模式（32位）</p>
+<ol>
+<li>地址线32根，最大内存4G</li>
+<li>32位寄存器，直接是可以访问到4G的</li>
+<li>段寄存器仍然16位，但是段寄存器中存储的是选择子而不是实模式中的段基址</li>
+</ol>
+<h3 id="保护模式下的内存访问相关"><a href="#保护模式下的内存访问相关" class="headerlink" title="保护模式下的内存访问相关"></a>保护模式下的内存访问相关</h3><p><img src="/images/11.png" alt="11.jpg"></p>
+<p><img src="/images/9.jpg" alt="9.jpg"></p>
+<p><img src="/images/8.jpg" alt="8.jpg"></p>
+<ul>
+<li><p>实例</p>
+<p>访问ds:0x9这样的内存,若选择子（段寄存器内容是0x8）</p>
+</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">0000 0000 0000 1000</span><br><span class="line"></span><br><span class="line">RPL: 00 </span><br><span class="line">TI: 0 (表示使用了GDT, 而非LDT)</span><br><span class="line">描述符索引值： 1， (结合TI, 则对应GDT中的第一个描述符）</span><br></pre></td></tr></table></figure>
+
+<p>​    假设第一个描述符 3个基址和起来后的内容是 0x1234,则段基址就是 0x12340x1234:0x9,最后访问的内存地址是0x123d</p>
+<h3 id="GDT中的段描述符详解"><a href="#GDT中的段描述符详解" class="headerlink" title="GDT中的段描述符详解"></a>GDT中的段描述符详解</h3><p>参考如下系列文章</p>
+<p><a href="http://www.cnblogs.com/longintchar/p/5224405.html" target="_blank" rel="noopener">http://www.cnblogs.com/longintchar/p/5224405.html</a></p>
+<h3 id="代码讲解"><a href="#代码讲解" class="headerlink" title="代码讲解"></a>代码讲解</h3><ul>
+<li>boot.S 分析</li>
+</ul>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line">   <span class="meta">%include</span> <span class="string">"boot.inc"</span></span><br><span class="line">   <span class="meta">section</span> loader vstart=LOADER_BASE_ADDR</span><br><span class="line">   LOADER_STACK_TOP <span class="built_in">equ</span> LOADER_BASE_ADDR</span><br><span class="line">   <span class="keyword">jmp</span> loader_start					<span class="comment">; 此处的物理地址是:</span></span><br><span class="line">   </span><br><span class="line"><span class="comment">;构建gdt及其内部的描述符</span></span><br><span class="line"><span class="symbol">   GDT_BASE:</span>   <span class="built_in">dd</span>    <span class="number">0x00000000</span> </span><br><span class="line">	       <span class="built_in">dd</span>    <span class="number">0x00000000</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">   CODE_DESC:</span>  <span class="built_in">dd</span>    <span class="number">0x0000FFFF</span> </span><br><span class="line">	       <span class="built_in">dd</span>    DESC_CODE_HIGH4</span><br><span class="line"></span><br><span class="line"><span class="symbol">   DATA_STACK_DESC:</span>  <span class="built_in">dd</span>    <span class="number">0x0000FFFF</span></span><br><span class="line">		     <span class="built_in">dd</span>    DESC_DATA_HIGH4</span><br><span class="line"></span><br><span class="line"><span class="symbol">   VIDEO_DESC:</span> <span class="built_in">dd</span>    <span class="number">0x80000007</span>	       <span class="comment">;limit=(0xbffff-0xb8000)/4k=0x7</span></span><br><span class="line">	       <span class="built_in">dd</span>    DESC_VIDEO_HIGH4  <span class="comment">; 此时dpl已改为0</span></span><br><span class="line"></span><br><span class="line">   GDT_SIZE   <span class="built_in">equ</span>   $ - GDT_BASE</span><br><span class="line">   GDT_LIMIT   <span class="built_in">equ</span>   GDT_SIZE -	<span class="number">1</span> </span><br><span class="line">   <span class="built_in">times</span> <span class="number">60</span> <span class="built_in">dq</span> <span class="number">0</span>					 <span class="comment">; 此处预留60个描述符的slot</span></span><br><span class="line">   SELECTOR_CODE <span class="built_in">equ</span> (<span class="number">0x0001</span>&lt;&lt;<span class="number">3</span>) + TI_GDT + RPL0         <span class="comment">; 相当于(CODE_DESC - GDT_BASE)/8 + TI_GDT + RPL0</span></span><br><span class="line">   SELECTOR_DATA <span class="built_in">equ</span> (<span class="number">0x0002</span>&lt;&lt;<span class="number">3</span>) + TI_GDT + RPL0	 <span class="comment">; 同上</span></span><br><span class="line">   SELECTOR_VIDEO <span class="built_in">equ</span> (<span class="number">0x0003</span>&lt;&lt;<span class="number">3</span>) + TI_GDT + RPL0	 <span class="comment">; 同上 </span></span><br><span class="line"></span><br><span class="line">   <span class="comment">;以下是定义gdt的指针，前2字节是gdt界限，后4字节是gdt起始地址</span></span><br><span class="line"></span><br><span class="line">   gdt_ptr  <span class="built_in">dw</span>  GDT_LIMIT </span><br><span class="line">	    <span class="built_in">dd</span>  GDT_BASE</span><br><span class="line">   loadermsg <span class="built_in">db</span> <span class="string">'2 loader in real.'</span></span><br><span class="line"></span><br><span class="line"><span class="symbol">   loader_start:</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;------------------------------------------------------------</span></span><br><span class="line"><span class="comment">;INT 0x10    功能号:0x13    功能描述:打印字符串</span></span><br><span class="line"><span class="comment">;------------------------------------------------------------</span></span><br><span class="line"><span class="comment">;输入:</span></span><br><span class="line"><span class="comment">;AH 子功能号=13H</span></span><br><span class="line"><span class="comment">;BH = 页码</span></span><br><span class="line"><span class="comment">;BL = 属性(若AL=00H或01H)</span></span><br><span class="line"><span class="comment">;CX＝字符串长度</span></span><br><span class="line"><span class="comment">;(DH、DL)＝坐标(行、列)</span></span><br><span class="line"><span class="comment">;ES:BP＝字符串地址 </span></span><br><span class="line"><span class="comment">;AL＝显示输出方式</span></span><br><span class="line"><span class="comment">;   0——字符串中只含显示字符，其显示属性在BL中。显示后，光标位置不变</span></span><br><span class="line"><span class="comment">;   1——字符串中只含显示字符，其显示属性在BL中。显示后，光标位置改变</span></span><br><span class="line"><span class="comment">;   2——字符串中含显示字符和显示属性。显示后，光标位置不变</span></span><br><span class="line"><span class="comment">;   3——字符串中含显示字符和显示属性。显示后，光标位置改变</span></span><br><span class="line"><span class="comment">;无返回值</span></span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">sp</span>, LOADER_BASE_ADDR</span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">bp</span>, loadermsg           <span class="comment">; ES:BP = 字符串地址</span></span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">cx</span>, <span class="number">17</span>			 <span class="comment">; CX = 字符串长度</span></span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">ax</span>, <span class="number">0x1301</span>		 <span class="comment">; AH = 13,  AL = 01h</span></span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">bx</span>, <span class="number">0x001f</span>		 <span class="comment">; 页号为0(BH = 0) 蓝底粉红字(BL = 1fh)</span></span><br><span class="line">   <span class="keyword">mov</span>	 <span class="built_in">dx</span>, <span class="number">0x1800</span>		 <span class="comment">;</span></span><br><span class="line">   <span class="keyword">int</span>	 <span class="number">0x10</span>                    <span class="comment">; 10h 号中断</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;----------------------------------------   准备进入保护模式   ------------------------------------------</span></span><br><span class="line">									<span class="comment">;1 打开A20</span></span><br><span class="line">									<span class="comment">;2 加载gdt</span></span><br><span class="line">									<span class="comment">;3 将cr0的pe位置1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">   <span class="comment">;-----------------  打开A20  ----------------</span></span><br><span class="line">   <span class="keyword">in</span> <span class="built_in">al</span>,<span class="number">0x92</span></span><br><span class="line">   <span class="keyword">or</span> <span class="built_in">al</span>,<span class="number">0000_0010B</span></span><br><span class="line">   <span class="keyword">out</span> <span class="number">0x92</span>,<span class="built_in">al</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">;-----------------  加载GDT  ----------------</span></span><br><span class="line">   <span class="keyword">lgdt</span> [gdt_ptr]</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">   <span class="comment">;-----------------  cr0第0位置1  ----------------</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">eax</span>, <span class="built_in">cr0</span></span><br><span class="line">   <span class="keyword">or</span> <span class="built_in">eax</span>, <span class="number">0x00000001</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">cr0</span>, <span class="built_in">eax</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">;jmp dword SELECTOR_CODE:p_mode_start	     ; 刷新流水线，避免分支预测的影响,这种cpu优化策略，最怕jmp跳转，</span></span><br><span class="line">   <span class="keyword">jmp</span>  SELECTOR_CODE:p_mode_start	     <span class="comment">; 刷新流水线，避免分支预测的影响,这种cpu优化策略，最怕jmp跳转，</span></span><br><span class="line">					     <span class="comment">; 这将导致之前做的预测失效，从而起到了刷新的作用。</span></span><br><span class="line"></span><br><span class="line">[<span class="meta">bits</span> <span class="number">32</span>]</span><br><span class="line"><span class="symbol">p_mode_start:</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ax</span>, SELECTOR_DATA</span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ds</span>, <span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">es</span>, <span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ss</span>, <span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">esp</span>,LOADER_STACK_TOP</span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ax</span>, SELECTOR_VIDEO</span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">gs</span>, <span class="built_in">ax</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">byte</span> [<span class="built_in">gs</span>:<span class="number">160</span>], <span class="string">'P'</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">jmp</span> $</span><br></pre></td></tr></table></figure>
+
+<p>将如下的地址对应到段描述符的高32位中的 0-23位</p>
+<ul>
+<li>G位</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DESC_G_4K   equ	  1_00000000000000000000000b</span><br></pre></td></tr></table></figure>
+
+<p>得到：<br>G=1 代表段基址的粒度是4KB（段界限将达到4G）</p>
+<ul>
+<li>D位</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DESC_D_32   equ	   1_0000000000000000000000b</span><br></pre></td></tr></table></figure>
+
+<p>这里分D和B,1是D,代表数据段，0是B，代表堆栈段</p>
+<ul>
+<li>type</li>
+</ul>
+<p><img src="/images/10.jpg" alt="10.jpg"></p>
+<ul>
+<li>全局描述符表(GDT)的构造</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">;构建gdt及其内部的描述符</span><br><span class="line">   GDT_BASE:   dd    0x00000000 </span><br><span class="line">	       dd    0x00000000</span><br><span class="line"></span><br><span class="line">   CODE_DESC:  dd    0x0000FFFF </span><br><span class="line">	       dd    DESC_CODE_HIGH4</span><br><span class="line"></span><br><span class="line">   DATA_STACK_DESC:  dd    0x0000FFFF</span><br><span class="line">		     dd    DESC_DATA_HIGH4</span><br><span class="line"></span><br><span class="line">   VIDEO_DESC: dd    0x80000007	       ;limit=(0xbffff-0xb8000)/4k=0x7</span><br><span class="line">	       dd    DESC_VIDEO_HIGH4  ; 此时dpl已改为0</span><br></pre></td></tr></table></figure>
+
+<p>​    GDT的三个段描述符： 代码段，堆栈段，显存段；GDT的第0个段不可用段描述符 64bit = 8B(dd是4字节，所以用两个ddd定义一个段描述符)</p>
+<p>​    实模式下内存地址 0xb8000到0xbffff是显示适配器BIOS所在区域，当段粒度是4k时，段界限大小为 0xbffff-0xb800/4k = 7, 所以段界限设为7，就足够表示这部分的内存区域了</p>
+<ul>
+<li>构造选择子（16位，可以索引到段描述符，13位索引+1位TI+2位RPL）</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">SELECTOR_CODE equ (0x0001&lt;&lt;3) + TI_GDT + RPL0         ; 相当于(CODE_DESC - GDT_BASE)/8 + TI_GDT + RPL0</span><br><span class="line"></span><br><span class="line">SELECTOR_DATA equ (0x0002&lt;&lt;3) + TI_GDT + RPL0	 ; 同上</span><br><span class="line"></span><br><span class="line">SELECTOR_VIDEO equ (0x0003&lt;&lt;3) + TI_GDT + RPL0	 ; 同上</span><br></pre></td></tr></table></figure>
+
+<p>三个选择子的内容分别是（注意索引0是没有用的，这里三个索引1,2,3），都访问GDT而非LDT, 请求特权级都是0级</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">0000000000000   00  0</span><br><span class="line">1   TI_GDT  RPL0</span><br><span class="line">2  TI_GDT  RPL0</span><br><span class="line">3   TI_GDT  RPL0</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>实模式到保护模式的设置和跳转</li>
+</ul>
+<p>进入保护模式，需要设置控制寄存器的cr0寄存器，其pe位置1，8686要打开A20，这些都在实模式完成，实模式也会设置GDT</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">lgdt [gdt_ptr]</span><br></pre></td></tr></table></figure>
+
+<p>GDT由gdtr寄存器加载(gdtr 48bit=6B,前16bit界限，后32bit是起始地址)</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">GDT_SIZE   equ   $ - GDT_BASE</span><br><span class="line">GDT_LIMIT   equ   GDT_SIZE -	1 </span><br><span class="line">times 60 dq 0					 ; 此处预留60个描述符的slot</span><br><span class="line">SELECTOR_CODE equ (0x0001&lt;&lt;3) + TI_GDT + RPL0         ; 相当于(CODE_DESC - GDT_BASE)/8 + TI_GDT + RPL0</span><br><span class="line">SELECTOR_DATA equ (0x0002&lt;&lt;3) + TI_GDT + RPL0	 ; 同上</span><br><span class="line">SELECTOR_VIDEO equ (0x0003&lt;&lt;3) + TI_GDT + RPL0	 ; 同上 </span><br><span class="line"></span><br><span class="line">;以下是定义gdt的指针，前2字节是gdt界限，后4字节是gdt起始地址</span><br><span class="line"></span><br><span class="line">gdt_ptr  dw  GDT_LIMIT </span><br><span class="line">    dd  GDT_BASE</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>保护模式代码执行</li>
+</ul>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">p_mode_start:</span><br><span class="line">   mov ax, SELECTOR_DATA</span><br><span class="line">   mov ds, ax</span><br><span class="line">   mov es, ax</span><br><span class="line">   mov ss, ax</span><br><span class="line">   mov esp,LOADER_STACK_TOP</span><br><span class="line">   mov ax, SELECTOR_VIDEO</span><br><span class="line">   mov gs, ax</span><br><span class="line"></span><br><span class="line">   mov byte [gs:160], &apos;P&apos;</span><br><span class="line"></span><br><span class="line">   jmp $</span><br></pre></td></tr></table></figure>
+
+<p>首先选择子假加载到寄存器，其中0xb8000-0xbfff这个文本显示BIOS内存区域加载到了gs，那么往gs写数据，就是操作0xb8000-0xbfff这块内存，数据也就能正常显示了</p>
+<p>按照上一节操作运行后得到的截图， 实模式和保护模式都能显示文本</p>
+<p><img src="/images/12.jpg" alt="12.jpg"></p>
+<hr>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/os/" rel="tag"># os</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/21/实模式/" rel="next" title="实模式">
+                <i class="fa fa-chevron-left"></i> 实模式
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/uploads/avatar.png" alt="Jiang Fan">
+            
+              <p class="site-author-name" itemprop="name">Jiang Fan</p>
+              <p class="site-description motion-element" itemprop="description">不积跬步无以至千里</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">5</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#实模式下的一些问题"><span class="nav-number">1.</span> <span class="nav-text">实模式下的一些问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#保护模式下的内存访问相关"><span class="nav-number">2.</span> <span class="nav-text">保护模式下的内存访问相关</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GDT中的段描述符详解"><span class="nav-number">3.</span> <span class="nav-text">GDT中的段描述符详解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#代码讲解"><span class="nav-number">4.</span> <span class="nav-text">代码讲解</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiang Fan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
