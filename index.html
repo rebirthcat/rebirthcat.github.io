@@ -252,7 +252,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/03/Http协议核心知识/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/03/TIMEWAIT和端口复用/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jiang Fan">
@@ -271,7 +271,7 @@
         
           <h1 class="post-title" itemprop="name headline">
                 
-                <a class="post-title-link" href="/2019/09/03/Http协议核心知识/" itemprop="url">未命名</a></h1>
+                <a class="post-title-link" href="/2019/09/03/TIMEWAIT和端口复用/" itemprop="url">TIMEWAIT和端口复用</a></h1>
         
 
         <div class="post-meta">
@@ -283,7 +283,7 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-03T16:08:51+08:00">
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-03T16:23:08+08:00">
                 2019-09-03
               </time>
             
@@ -293,6 +293,39 @@
             
           </span>
 
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机网络</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/网络编程/" itemprop="url" rel="index">
+                    <span itemprop="name">网络编程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
           
 
           
@@ -323,7 +356,317 @@
       
         
           
+            <h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>​    TIME_WAIT和端口复用这两个概念既有区别又有联系，很多人认为端口复用是用来专门解决TIME_WAIT，其实这是一种错误的认知，错就错在“专门”上，端口复用的主要解决的是服务器进程快速重启、单进程accept调用的并发瓶颈和“惊群”效应，本文将详细介绍TIME_WAIT状态存在的必要性、原因以及减少TIME_WAIT数量的方法，然后介绍实现端口复用的两个socket选项：REFUSEADDR和REFUSEPORT,用具体的示例来说明这两个选项的最常用的使用场景。</p>
+<h3 id="TIME-WAIT"><a href="#TIME-WAIT" class="headerlink" title="TIME_WAIT"></a>TIME_WAIT</h3><h4 id="发生场景"><a href="#发生场景" class="headerlink" title="发生场景"></a>发生场景</h4><p><img src="/images/network/8.png" alt="network/8.png">    </p>
+<p>主动发起关闭动作的一方在收到对端发来的FIN报文并发送ACK后，进入TIME_WIAT状态，这个状态持续的时间是固定的2MSL，大约120s</p>
+<h4 id="存在意义"><a href="#存在意义" class="headerlink" title="存在意义"></a>存在意义</h4><ul>
+<li>如果没有TIME_WAIT，主动关闭方调用close，向对端发送FIN后直接进入close状态，那么这条tcp连接的上下文将被立即释放，此时如果对端也调用close，发送FIN报文后，由于在主动方这条连接已经不存在，主动方只能发送一个RST复位报文，那么被动方就会出现错误</li>
+<li>持续2MSL这么长时间的目的是为了让主动关闭放的最后一个ACK能让被动方接受，同时可以让“迷走报文”能够有足够长的时间游荡在网络中，从而被网络丢弃，否则这些”迷走报文”将对新建立的连接产生影响</li>
+</ul>
+<h4 id="危害"><a href="#危害" class="headerlink" title="危害"></a>危害</h4><ul>
+<li>socket=(本地ip，本地port，远端ip，远端port），当进程作为一个客户端对一个已知ip和port的远端服务端发起连接时，在这个连接对应的socket中，本地ip固定，远端ip和远端port都已固定，只有16位的本地port是操作系统临时分配的，所有操作系统能允许对同一个远端服务器进程同时建立的连接数=2的16次方，即65535，而操作系统前1024个端口号不允许用户进程占用，所以真正可以使用端口号的范围为1024~65535</li>
+<li>内存资源占用，但几乎可以忽略不计</li>
+<li>端口资源占用，比如nginx在做反向代理时，即是客户端的也是服务端，当作为客户端反向代理到上游服务器建立tcp连接时，如果nginx主动关闭对上游服务的连接，此时这个连接状态就会变成TIME_WAIT,在反向代理是有内核分配的端口将不能被使用，当与上游服务器建立大量的tcp短连接时，nginx所在的机器就会出现大量的TIME_WAIT,直到消耗尽系统的端口数量，此时服务就会出现时而能访问，时而又不能访问的诡异现象优化</li>
+</ul>
+<h4 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h4><p>​    调整内核参数，设置net.ipv4.tcp_tw_reuse=1，调整完后，nginx向上游服务器发起断开连接的请求后，只需过1s，这个断开的处于TIME_WAIT的状态的端口就可以再次被nginx用来向上游服务器用来建立连接</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​    从以上叙述看来，TIME_WAIT和端口复用没有太大的关联，解决TIME_WAIT数量过多的最有效方法也只是适用进程作为客户端对外发起大量连接，而端口复用于TIME_WAIT唯一的联系就是，某一个端口处在TIME_WAIT状态，而这个端口又是某个服务进场启动时候的监听端口时，开启端口复用选项可以让服务进程立即启动，而不必等待2MSL的时间，当然这只是端口复用的一个使用场景，端口复用还有另一个使用场景就是让多个进程（通常是子进程）同时监听相同端口，当有客户端建立连接的请求过来时，由内核通过某种负载均衡策略将连接转移到不同进程上，目的是解决有大量客户端同时建立连接时，单进程accept调用的瓶颈（对正在建立连接的请求有数量限制，即listen函数的第二个参数，默认是1024，表示同时想服务进程进行三次握手动作的客户端的最大数量，注意是仅仅指正在进行三次握手动作的客户端数量，不包括建立好连接的客户端数量）</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/23/Http协议核心知识/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/23/Http协议核心知识/" itemprop="url">Http协议</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
             
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-23T09:29:35+08:00">
+                2019-08-23
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机网络</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/网络协议/" itemprop="url" rel="index">
+                    <span itemprop="name">网络协议</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="HTTP特点"><a href="#HTTP特点" class="headerlink" title="HTTP特点"></a>HTTP特点</h3><ul>
+<li>灵活可扩展 </li>
+<li>可靠传输</li>
+<li>请求-应答通信模型</li>
+<li>无状态</li>
+</ul>
+<h3 id="HTTP缺点"><a href="#HTTP缺点" class="headerlink" title="HTTP缺点"></a>HTTP缺点</h3><ul>
+<li>明文不安全</li>
+<li>队头阻塞性能差</li>
+</ul>
+<h3 id="内容协商"><a href="#内容协商" class="headerlink" title="内容协商"></a>内容协商</h3><h4 id="数据类型、编码和语言"><a href="#数据类型、编码和语言" class="headerlink" title="数据类型、编码和语言"></a>数据类型、编码和语言</h4><ul>
+<li><p>Accept客户端告诉服务器我这次请求能支持的响应数据类型,例如Accept:text/html,application/xml,image/webp,image</p>
+</li>
+<li><p>Content-Type服务器通知客户端段返回的数据类型，例如Content-Type: text/html</p>
+</li>
+<li><p>Accept-Encoding客户端通知服务器支持的压缩格式，例如Accept-Encoding: gzip, deflate, br</p>
+</li>
+<li><p>Content-Encoding服务器通知客户端所使用的压缩算法，例如Content-Encoding: gzip</p>
+</li>
+<li><p>Accept-Language客户端告诉服务器可以理解的自然语言，例如Accept-Language: zh-CN, zh, en</p>
+</li>
+<li><p>Content-Language服务端告诉客户端返回数据的实际语言,例如Content-Language: zh-CN</p>
+</li>
+<li><p>Accept-Charset客户端通知服务端我支持的字符集，例如Accept-Charset: gbk, utf-8，但是服务端返回的字符集类型存在于Content-Type中，例如Content-Type: text/html; charset=utf-8</p>
+</li>
+<li><p>客户端可以使用权重q=value来告诉服务端客户端的“喜好”，q的范围为0.01~1，默认是1。例如Accept: text/html,application/xml;q=0.9,<em>/</em>;q=0.8（最喜欢权重为1的html，其次是权重为0.9的xml，最后是权重是0.8的任意数据）</p>
+</li>
+</ul>
+<h4 id="分块传输"><a href="#分块传输" class="headerlink" title="分块传输"></a>分块传输</h4><ul>
+<li><p>分块传输常用于大文件的流式传输，可以实现变传输变渲染，提高用户体验</p>
+</li>
+<li><p>Transfer-Encoding: chunked 服务端告诉客户端响应数据是分块传输的，你需要按照我们定好的分块传输格式提取每个分块的内容，然后组合在一起，过程中客户端与服务器的连接仍然维持不会断开。</p>
+</li>
+<li><p>每个分块数据的格式：分块长度+分块数据，每个部分都用CRLF来分隔，客户端根据这个分隔符和分块长度正确提取每个分块的数据，并使用一个分块长度为0的”结束分块“来告知客户端所有分块传输完毕</p>
+</li>
+<li><p><img src="/images/network/1.png" alt="network/1.png"></p>
+</li>
+</ul>
+<ul>
+<li>Transfer-Encoding: chunked 和Content-Length不能同时使用，Content-Length表示一次完成的请求中传输的所有内容长度；而分块传输的所有分块都只是一次=请求中未完成的一部分，具体现象见下图</li>
+<li><img src="/images/network/2.gif" alt="network/2.gif"></li>
+</ul>
+<h4 id="范围请求"><a href="#范围请求" class="headerlink" title="范围请求"></a>范围请求</h4><ul>
+<li><p>范围请求常用于视频播放中的进度条拖到，跳过片头等功能</p>
+</li>
+<li><p>Range 客户端使用Range:bytes=0-50 通知服务端只返回响应的0~50个字节，可以指定多个范围，用”,”分隔</p>
+</li>
+<li><p>服务端接受到客户端的Range请求后要做以下3件事情：</p>
+<ol>
+<li>检查客户端要求的范围是否合法，如果超出响应数据的范围，返回416错误码</li>
+<li>范围正确，根据请求头Range头计算偏移量，截取对应数据，并返回206状态吗</li>
+<li>添加响应头Content-Range头，例如Content-Range:bytes 0-10/100，表示这次请求按照你的要求返回了0-10字节的内容，整个文件的内容长度是100字节</li>
+</ol>
+</li>
+<li><figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GET</span> <span class="string">/</span> HTTP/1.1</span><br><span class="line"><span class="attribute">Host</span>: www.test.com</span><br><span class="line"><span class="attribute">Range</span>: bytes=0-31</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 <span class="number">206</span> Partial Content</span><br><span class="line"><span class="attribute">Content-Length</span>: 32</span><br><span class="line"><span class="attribute">Accept-Ranges</span>: bytes</span><br><span class="line"><span class="attribute">Content-Range</span>: bytes 0-31/128</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="重定向"><a href="#重定向" class="headerlink" title="重定向"></a>重定向</h3><h4 id="重定向流程"><a href="#重定向流程" class="headerlink" title="重定向流程"></a>重定向流程</h4><ul>
+<li>浏览器发送某个请求/hello</li>
+<li>服务器路由规则匹配上这个url后返回302重定向状态码，并在响应头添加Location:/xxx.html</li>
+<li>浏览器收到带有Location:/xxx.html的302响应，将使用Loction中url向服务端再次发送请求，并使用这个请求的结果渲染页面</li>
+</ul>
+<h4 id="重定向状态码"><a href="#重定向状态码" class="headerlink" title="重定向状态码"></a>重定向状态码</h4><ul>
+<li>301 永久重定向，意思原 URI 已经“永久”性地不存在了，今后的所有请求都必须改用新URL，浏览器对301响应做出相应的优化措施，比如保存重定向的URL，下次再有原URL请求是，直接使用新URL，即只做一次请求</li>
+<li>302 临时重定向，临时的意思就是浏览器不做额外处理，下次再来原URL请求时，还会走相同的重定向流程</li>
+</ul>
+<h3 id="Cookie"><a href="#Cookie" class="headerlink" title="Cookie"></a>Cookie</h3><h4 id="工作流程"><a href="#工作流程" class="headerlink" title="工作流程"></a>工作流程</h4><ul>
+<li>浏览器发送请求</li>
+<li>服务端使用set-Cookie: key=value的响应头</li>
+<li>浏览器将key=value保存在本地，下次使用相同域名或者子域名发送请求是，在请求头中设置Cookie:key=value</li>
+</ul>
+<h4 id="cookie相关属性"><a href="#cookie相关属性" class="headerlink" title="cookie相关属性"></a>cookie相关属性</h4><ul>
+<li><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Set-Cookie: jiangfan=hello; Max-Age=10; Expires=Fri, 23-Aug-19 06:12:27 GMT; Domain=localhost; Path=/; HttpOnly; SameSite=Strict</span><br></pre></td></tr></table></figure>
+
+<p>Expires和Max-Age都表示过期时间，前者表示相对秒数，后者表示过期的绝对时间，两者可以一致，也可以不一致，浏览器优先采用Max-Age来计算失效时间</p>
+</li>
+<li><p>Domain和path表示域名和路径，浏览器在发送请求前，会先提取url中的域名和路径进行比对，如果不满足条件，则不会带上这个cookie</p>
+</li>
+<li><p>HttpOnly是服务端告诉浏览器这个cookie只能通过http协议传输，浏览器的js引擎就会禁用和cookie有关的api，以防止脚本攻击</p>
+</li>
+<li><p>SameSite=Strict可以防范”XSRF“，Strict表示严格限定Cookie不能随着跳转链接跨站发送</p>
+</li>
+<li><p>Secure表示这个Cooike仅能使用https协议加密传输</p>
+</li>
+</ul>
+<h3 id="缓存控制"><a href="#缓存控制" class="headerlink" title="缓存控制"></a>缓存控制</h3><h4 id="服务端的缓存控制"><a href="#服务端的缓存控制" class="headerlink" title="服务端的缓存控制"></a>服务端的缓存控制</h4><ul>
+<li>Cache-Control: max-age=10响应头表示服务器通知客户端这次响应内容可以缓存10s，max-age=xxx后面可以跟多个属性字段，例如 no-store， no-cache，must-revalidate，用来实现更复杂的缓存策略</li>
+<li>no-store 不允许缓存<ol>
+<li>no-cache 可以缓存，但即使在max-age时间范围内（没过期），下次请求时必须先主动向服务端验证是否过期</li>
+<li>must-revalidate  可以缓存，只要在max-age时间范围内（没过期），就可以不用主动向服务端验证是否过期直接使用本地缓存</li>
+</ol>
+</li>
+</ul>
+<h4 id="客户端缓存控制"><a href="#客户端缓存控制" class="headerlink" title="客户端缓存控制"></a>客户端缓存控制</h4><ul>
+<li>Cache-Control这个头字段服务端和客户端都可能使用，即客户端可以使用该头来自己觉得这次请求是否走缓存</li>
+<li>Cache-Control: max-age=0 如果客户端使用这个请求头发送请求，表示这次请求不经过缓存直接请求服务端最新的数据，在浏览器刷新页面时，请求头会含有Cache-Control: max-age=0，导致每次刷新页面时都没有检查缓存</li>
+<li>浏览器使用Ctrl+F5可以实现”强制刷新”，原理就是在请求时带上”Cache-Control: no-cache”</li>
+</ul>
+<h3 id="连接管理"><a href="#连接管理" class="headerlink" title="连接管理"></a>连接管理</h3><h4 id="http1-0短连接"><a href="#http1-0短连接" class="headerlink" title="http1.0短连接"></a>http1.0短连接</h4><ul>
+<li>请求完后立即4次挥手关闭连接，下次请求重新3次握手建立连接</li>
+<li>从客户端来看每次请求都要建立连接，响应慢</li>
+<li>从服务端来看需要使用大量的资源来处理连接的建立和断开，性能很差</li>
+</ul>
+<h4 id="http1-1长连接"><a href="#http1-1长连接" class="headerlink" title="http1.1长连接"></a>http1.1长连接</h4><ul>
+<li><p><img src="/images/network/4.png" alt="network/4.png"></p>
+</li>
+<li><p>http1.1默认使用长连接</p>
+</li>
+<li><p>Connection:keep-alive 服务端通知客户端可以使用长连接通信</p>
+</li>
+<li><p>客户端和服务端都可以主动关闭长连接</p>
+</li>
+<li><p>Connection:close 客户端使用该请求头通知服务端这次通信完后就会关闭连接，服务端收到该头后，也会返回Connection:close 头，然后调用tcp socket API 关闭tcp连接</p>
+</li>
+<li><p>nginx支持在服务端主动关闭连，比如nginx使用keepalive_timeout 设置长连接超时时间，超过这段时间客户端仍然没有发送数据，就主动关闭连接，使用keepalive_requeset 设置每个长连接上可发送的最大请求数，超过这个请求数也会主动关闭连接</p>
+</li>
+<li><p>相对于短连接，减少重复建立和断开连接步骤，但存在http请求的队头阻塞和tcp请求的队头阻塞问题</p>
+</li>
+</ul>
+<h4 id="http队头阻塞"><a href="#http队头阻塞" class="headerlink" title="http队头阻塞"></a>http队头阻塞</h4><ul>
+<li><p><img src="/images/network/5.png" alt="network/5.png"></p>
+</li>
+<li><p>短连接和长连接都存在http队头阻塞，这是http 请求-应答模型决定的</p>
+</li>
+<li><p>为了更好的解释队头阻塞现象，作如下假定：</p>
+<ol>
+<li>客户端浏览器对同一个域名只打开一个tcp连接（通常默认是6个）</li>
+<li>服务端处理请求时间非常长，假设10s</li>
+</ol>
+</li>
+<li><p>浏览器打开一个页面，发送A请求，此时A页面将在至少10s内无法得到响应，此时再次打开同样的页面，发送同样的请求B（与A复用同一条tcp连接），此时浏览器将不会真的将B的请求发送出去，只会将B的请求入队列，等待A的响应到来后才会发送B请求，这就导致复用同一条tcp连接B请求被hold住，只有A的响应完全被处理之后，浏览器才会真正的发送B请求，这就是所谓的http队头阻塞。</p>
+</li>
+<li><p>http队头阻塞的本质就是在同一条tcp连接上的http请求必须排队挨个处理，第一个http请求没有得到响应之前，客户端拒绝在同一条tcp连接上发送请求</p>
+</li>
+<li><p>http1.1针对队头阻塞问题，有以下解决方案：</p>
+<ol>
+<li>http1.1协议建议客户端使用并发连接，一般浏览器客户端对同一个域名的请求都保持6~8个tcp连接</li>
+<li>域名分片，本质上还是提高客户端对某个服务的并发连接数</li>
+</ol>
+</li>
+</ul>
+
           
         
       
@@ -1407,7 +1750,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1418,7 +1761,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -1429,7 +1772,7 @@
               
               <div class="site-state-item site-state-tags">
                 
-                  <span class="site-state-item-count">2</span>
+                  <span class="site-state-item-count">3</span>
                   <span class="site-state-item-name">标签</span>
                 
               </div>

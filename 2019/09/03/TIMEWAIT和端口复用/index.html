@@ -68,7 +68,7 @@
 
 
 
-  <meta name="keywords" content="os,">
+  <meta name="keywords" content="network,">
 
 
 
@@ -79,21 +79,20 @@
 
 
 
-<meta name="description" content="本章知识汇总什么是地址 地址只是数字，描述指令或数据在编译好的二进制文件中的位置，某条指令或者某个数据的地址=指令所在section的虚拟起始地址(vstart)+上述起始虚拟地址到该条指令或数据的偏移量  在汇编语言中如果文件开头使用section xxx vstart=yyy：后面的指令地址都是以yyy为基准进行编排，如果没有使用vstart指定编译地址的基准值，则编译好的二进制文件中的第一个">
-<meta name="keywords" content="os">
+<meta name="description" content="摘要​    TIME_WAIT和端口复用这两个概念既有区别又有联系，很多人认为端口复用是用来专门解决TIME_WAIT，其实这是一种错误的认知，错就错在“专门”上，端口复用的主要解决的是服务器进程快速重启、单进程accept调用的并发瓶颈和“惊群”效应，本文将详细介绍TIME_WAIT状态存在的必要性、原因以及减少TIME_WAIT数量的方法，然后介绍实现端口复用的两个socket选项：REFU">
+<meta name="keywords" content="network">
 <meta property="og:type" content="article">
-<meta property="og:title" content="实模式">
-<meta property="og:url" content="http://yoursite.com/2019/08/21/实模式/index.html">
+<meta property="og:title" content="TIMEWAIT和端口复用">
+<meta property="og:url" content="http://yoursite.com/2019/09/03/TIMEWAIT和端口复用/index.html">
 <meta property="og:site_name" content="Elvis">
-<meta property="og:description" content="本章知识汇总什么是地址 地址只是数字，描述指令或数据在编译好的二进制文件中的位置，某条指令或者某个数据的地址=指令所在section的虚拟起始地址(vstart)+上述起始虚拟地址到该条指令或数据的偏移量  在汇编语言中如果文件开头使用section xxx vstart=yyy：后面的指令地址都是以yyy为基准进行编排，如果没有使用vstart指定编译地址的基准值，则编译好的二进制文件中的第一个">
+<meta property="og:description" content="摘要​    TIME_WAIT和端口复用这两个概念既有区别又有联系，很多人认为端口复用是用来专门解决TIME_WAIT，其实这是一种错误的认知，错就错在“专门”上，端口复用的主要解决的是服务器进程快速重启、单进程accept调用的并发瓶颈和“惊群”效应，本文将详细介绍TIME_WAIT状态存在的必要性、原因以及减少TIME_WAIT数量的方法，然后介绍实现端口复用的两个socket选项：REFU">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://yoursite.com/images/4.jpg">
-<meta property="og:image" content="http://yoursite.com/images/5.jpg">
-<meta property="og:updated_time" content="2019-08-22T01:32:27.443Z">
+<meta property="og:image" content="http://yoursite.com/images/network/8.png">
+<meta property="og:updated_time" content="2019-09-04T01:43:35.508Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="实模式">
-<meta name="twitter:description" content="本章知识汇总什么是地址 地址只是数字，描述指令或数据在编译好的二进制文件中的位置，某条指令或者某个数据的地址=指令所在section的虚拟起始地址(vstart)+上述起始虚拟地址到该条指令或数据的偏移量  在汇编语言中如果文件开头使用section xxx vstart=yyy：后面的指令地址都是以yyy为基准进行编排，如果没有使用vstart指定编译地址的基准值，则编译好的二进制文件中的第一个">
-<meta name="twitter:image" content="http://yoursite.com/images/4.jpg">
+<meta name="twitter:title" content="TIMEWAIT和端口复用">
+<meta name="twitter:description" content="摘要​    TIME_WAIT和端口复用这两个概念既有区别又有联系，很多人认为端口复用是用来专门解决TIME_WAIT，其实这是一种错误的认知，错就错在“专门”上，端口复用的主要解决的是服务器进程快速重启、单进程accept调用的并发瓶颈和“惊群”效应，本文将详细介绍TIME_WAIT状态存在的必要性、原因以及减少TIME_WAIT数量的方法，然后介绍实现端口复用的两个socket选项：REFU">
+<meta name="twitter:image" content="http://yoursite.com/images/network/8.png">
 
 
 
@@ -123,13 +122,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2019/08/21/实模式/">
+  <link rel="canonical" href="http://yoursite.com/2019/09/03/TIMEWAIT和端口复用/">
 
 
 
 
 
-  <title>实模式 | Elvis</title>
+  <title>TIMEWAIT和端口复用 | Elvis</title>
   
 
 
@@ -256,7 +255,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/21/实模式/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/03/TIMEWAIT和端口复用/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="Jiang Fan">
@@ -273,7 +272,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">实模式</h1>
+          <h1 class="post-title" itemprop="name headline">TIMEWAIT和端口复用</h1>
         
 
         <div class="post-meta">
@@ -285,8 +284,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-21T19:21:02+08:00">
-                2019-08-21
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-03T16:23:08+08:00">
+                2019-09-03
               </time>
             
 
@@ -308,8 +307,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/操作系统/" itemprop="url" rel="index">
-                    <span itemprop="name">操作系统</span>
+                  <a href="/categories/计算机网络/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机网络</span>
                   </a>
                 </span>
 
@@ -319,8 +318,8 @@
                 
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/操作系统/学习总结/" itemprop="url" rel="index">
-                    <span itemprop="name">学习总结</span>
+                  <a href="/categories/计算机网络/网络编程/" itemprop="url" rel="index">
+                    <span itemprop="name">网络编程</span>
                   </a>
                 </span>
 
@@ -356,57 +355,20 @@
       
 
       
-        <h3 id="本章知识汇总"><a href="#本章知识汇总" class="headerlink" title="本章知识汇总"></a>本章知识汇总</h3><h4 id="什么是地址"><a href="#什么是地址" class="headerlink" title="什么是地址"></a>什么是地址</h4><ul>
-<li><p>地址只是数字，描述指令或数据在编译好的二进制文件中的位置，某条指令或者某个数据的地址=指令所在section的虚拟起始地址(vstart)+上述起始虚拟地址到该条指令或数据的偏移量</p>
-</li>
-<li><p>在汇编语言中如果文件开头使用section xxx vstart=yyy：后面的指令地址都是以yyy为基准进行编排，如果没有使用vstart指定编译地址的基准值，则编译好的二进制文件中的第一个字节的地址就是0x00000000（不管这第一个字节是指令还是数据）</p>
-</li>
-<li><p>假设纯二进制文件的前3个字节是一条指令，也即第一条指令，那么这条指令的地址就是0x00000000，如果使用vstart指定本文件的起始编排地址是yyy，那么这条指令的地址就是yyy。</p>
-</li>
-<li><p>如果第一条指令是3个字节长度，如果3个字节之后紧接着仍然是一条指令即第二条指令，那么这条指令的地址是0x00000000+3=0x00000003，如果指定编排的基准的地址vstart=yyy，那么第二条指令的地址就是yyy+3</p>
-</li>
-<li><p>下面是一段未指定起始虚拟地址的纯二进制文件的反汇编结果：</p>
-<p><img src="/images/4.jpg" alt="4.jpg"></p>
-<p>第一条指令B80000一共3个字节，那么第二条指令的地址就是0x0000003，第二条指令是8ED8一共2个字节，那么第三条指令的地址就是0x00000005，var dw 0x99表示定义一个双字的数据，值为99，那么代表这个99的变量的地址=vstart为基准+前面所有指令和数据的长度，由于vstart=0，前面5条指令的总大小为0xD，那么这个变量的地址就是0x0000000D。</p>
-</li>
-<li><p>结论：编译器给程序中各指令或数据编排的地址，本质上就是指令或数据相对于文件开头的偏移量+vstart伪指令指定的虚拟起始地址</p>
-</li>
+        <h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>​    TIME_WAIT和端口复用这两个概念既有区别又有联系，很多人认为端口复用是用来专门解决TIME_WAIT，其实这是一种错误的认知，错就错在“专门”上，端口复用的主要解决的是服务器进程快速重启、单进程accept调用的并发瓶颈和“惊群”效应，本文将详细介绍TIME_WAIT状态存在的必要性、原因以及减少TIME_WAIT数量的方法，然后介绍实现端口复用的两个socket选项：REFUSEADDR和REFUSEPORT,用具体的示例来说明这两个选项的最常用的使用场景。</p>
+<h3 id="TIME-WAIT"><a href="#TIME-WAIT" class="headerlink" title="TIME_WAIT"></a>TIME_WAIT</h3><h4 id="发生场景"><a href="#发生场景" class="headerlink" title="发生场景"></a>发生场景</h4><p><img src="/images/network/8.png" alt="network/8.png">    </p>
+<p>主动发起关闭动作的一方在收到对端发来的FIN报文并发送ACK后，进入TIME_WIAT状态，这个状态持续的时间是固定的2MSL，大约120s</p>
+<h4 id="存在意义"><a href="#存在意义" class="headerlink" title="存在意义"></a>存在意义</h4><ul>
+<li>如果没有TIME_WAIT，主动关闭方调用close，向对端发送FIN后直接进入close状态，那么这条tcp连接的上下文将被立即释放，此时如果对端也调用close，发送FIN报文后，由于在主动方这条连接已经不存在，主动方只能发送一个RST复位报文，那么被动方就会出现错误</li>
+<li>持续2MSL这么长时间的目的是为了让主动关闭放的最后一个ACK能让被动方接受，同时可以让“迷走报文”能够有足够长的时间游荡在网络中，从而被网络丢弃，否则这些”迷走报文”将对新建立的连接产生影响</li>
 </ul>
-<h4 id="section和vstart"><a href="#section和vstart" class="headerlink" title="section和vstart"></a>section和vstart</h4><ul>
-<li>section是汇编语言的伪指令，称为节，表示在汇编代码中宣称一块区域</li>
-<li>只是为了让汇编程序员在手写汇编代码时能在逻辑上将程序划分成几个部分</li>
-<li>section 伪指令配合vstar表示命令编译器在为该section区域的汇编指令编译成二进制指令时，将该section下的第一条指令或数据地址编排为vstart指定的值</li>
+<h4 id="危害"><a href="#危害" class="headerlink" title="危害"></a>危害</h4><ul>
+<li>socket=(本地ip，本地port，远端ip，远端port），当进程作为一个客户端对一个已知ip和port的远端服务端发起连接时，在这个连接对应的socket中，本地ip固定，远端ip和远端port都已固定，只有16位的本地port是操作系统临时分配的，所有操作系统能允许对同一个远端服务器进程同时建立的连接数=2的16次方，即65535，而操作系统前1024个端口号不允许用户进程占用，所以真正可以使用端口号的范围为1024~65535</li>
+<li>内存资源占用，但几乎可以忽略不计</li>
+<li>端口资源占用，比如nginx在做反向代理时，即是客户端的也是服务端，当作为客户端反向代理到上游服务器建立tcp连接时，如果nginx主动关闭对上游服务的连接，此时这个连接状态就会变成TIME_WAIT,在反向代理是有内核分配的端口将不能被使用，当与上游服务器建立大量的tcp短连接时，nginx所在的机器就会出现大量的TIME_WAIT,直到消耗尽系统的端口数量，此时服务就会出现时而能访问，时而又不能访问的诡异现象优化</li>
 </ul>
-<p><img src="/images/5.jpg" alt="5.jpg"></p>
-<ul>
-<li>第9行汇编代码使用伪指令section将10,11,12行的指令在逻辑上划分出来，但是只是用于汇编程序员进行代码的管理和分类，可以看到该行并产生任何机器码指令。</li>
-</ul>
-<ul>
-<li>第5行中的mov ax,$被编译程B8097C，表明在使用section code vstart=0x7c00后，第5行的当前指令所在的地址变成0x7c00+当前指令所在section的真实偏移量0x9（code节的第一条指令距离当前指令的长度）</li>
-</ul>
-<ul>
-<li>第6行中mov ax,[var1] 被编译成A10009，表明使用section data vstart=0x900后，var1变量的地址被编译器编排成了0x900+var1变量所在section的真实偏移量0x0    </li>
-</ul>
-<h4 id="vstart的作用"><a href="#vstart的作用" class="headerlink" title="vstart的作用"></a>vstart的作用</h4><ul>
-<li><p>vstart指令并不会影响二进制文件的大小，比如mbr.s中开头的section mbr vstart=0x7c00，并不会导致编译好的二进制文件在开头会空出0x7c00字节，换句话说不会改变编译好后二级制文件的大小</p>
-</li>
-<li><p>vstart仅仅会影响汇编文件中的某些符号会被编译器替换成什么样的数值，这些符号通常代表指令或者数据的地址，比如$,$$,var1 dw 0x99中的var1代表0x99这个数据所在的地址等</p>
-<ul>
-<li>mov ax,$ $是汇编语言中的符号，用来让汇编程序员获取当前指令的地址，但是这个$最终被编译器编排成多少呢？答案是如果没有指定任何vstart，$=当前指令距离文件的偏移量，指定vstart后，$=当前指令距离当前节的偏移量+vstart</li>
-<li>var dw 0x99 ；mov ax,[var] 0x99的地址var具体是多少呢？同理，如果没有指定任何vstart，var的值将被编译器编译为距离文件开头的偏移量，指定vstart后，var=数据距离当前节的偏移量+vstart</li>
-</ul>
-</li>
-<li><p>在MBR.S中开头的section mbr vstart=0x7c00的意义：告诉编译器：“嘿，老兄，帮我吧后面所有数据和指令的地址以0x7c00为起始开始编排吧，因为我的前辈（BIOS）会将我所有的内容原封不动的拷贝到0x7c00处，然后跳转到0x7c00继续执行，如果不这样编排地址，我就没法执行了哈”</p>
-</li>
-</ul>
-<h4 id="实模式特点"><a href="#实模式特点" class="headerlink" title="实模式特点"></a>实模式特点</h4><ul>
-<li>实模式是指8086CPU的寻址方式，寄存器大小和指令用法等，即CPU在这一套环境下的工作方式</li>
-<li>实模式用到的寄存器默认都是16位</li>
-<li>8086cpu的地址总线是20位，即访问范围是1MB，即0x0000000~0xFFFFFFF，但是寄存器都是16位，访问20位地址访问的方法：段寄存器中的段基址左移4位+通用寄存器的16为偏移量。</li>
-</ul>
-<h4 id="实模式的缺陷"><a href="#实模式的缺陷" class="headerlink" title="实模式的缺陷"></a>实模式的缺陷</h4><ul>
-<li>安全问题：实模式下，用户程序和操作系统是同一特权级的程序，和操作系统平起平坐，用户程序可以执行具有破坏性的指令</li>
-</ul>
+<h4 id="解决方法"><a href="#解决方法" class="headerlink" title="解决方法"></a>解决方法</h4><p>​    调整内核参数，设置net.ipv4.tcp_tw_reuse=1，调整完后，nginx向上游服务器发起断开连接的请求后，只需过1s，这个断开的处于TIME_WAIT的状态的端口就可以再次被nginx用来向上游服务器用来建立连接</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>​    从以上叙述看来，TIME_WAIT和端口复用没有太大的关联，解决TIME_WAIT数量过多的最有效方法也只是适用进程作为客户端对外发起大量连接，而端口复用于TIME_WAIT唯一的联系就是，某一个端口处在TIME_WAIT状态，而这个端口又是某个服务进场启动时候的监听端口时，开启端口复用选项可以让服务进程立即启动，而不必等待2MSL的时间，当然这只是端口复用的一个使用场景，端口复用还有另一个使用场景就是让多个进程（通常是子进程）同时监听相同端口，当有客户端建立连接的请求过来时，由内核通过某种负载均衡策略将连接转移到不同进程上，目的是解决有大量客户端同时建立连接时，单进程accept调用的瓶颈（对正在建立连接的请求有数量限制，即listen函数的第二个参数，默认是1024，表示同时想服务进程进行三次握手动作的客户端的最大数量，注意是仅仅指正在进行三次握手动作的客户端数量，不包括建立好连接的客户端数量）</p>
 
       
     </div>
@@ -424,7 +386,7 @@
       
         <div class="post-tags">
           
-            <a href="/tags/os/" rel="tag"># os</a>
+            <a href="/tags/network/" rel="tag"># network</a>
           
         </div>
       
@@ -437,8 +399,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/21/nginx负载均衡策略/" rel="next" title="nginx负载均衡策略">
-                <i class="fa fa-chevron-left"></i> nginx负载均衡策略
+              <a href="/2019/08/23/Http协议核心知识/" rel="next" title="Http协议">
+                <i class="fa fa-chevron-left"></i> Http协议
               </a>
             
           </div>
@@ -446,10 +408,6 @@
           <span class="post-nav-divider"></span>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2019/08/22/保护模式入门/" rel="prev" title="保护模式入门">
-                保护模式入门 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -583,7 +541,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#本章知识汇总"><span class="nav-number">1.</span> <span class="nav-text">本章知识汇总</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#什么是地址"><span class="nav-number">1.1.</span> <span class="nav-text">什么是地址</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#section和vstart"><span class="nav-number">1.2.</span> <span class="nav-text">section和vstart</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#vstart的作用"><span class="nav-number">1.3.</span> <span class="nav-text">vstart的作用</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实模式特点"><span class="nav-number">1.4.</span> <span class="nav-text">实模式特点</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实模式的缺陷"><span class="nav-number">1.5.</span> <span class="nav-text">实模式的缺陷</span></a></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#摘要"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TIME-WAIT"><span class="nav-number">2.</span> <span class="nav-text">TIME_WAIT</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#发生场景"><span class="nav-number">2.1.</span> <span class="nav-text">发生场景</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#存在意义"><span class="nav-number">2.2.</span> <span class="nav-text">存在意义</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#危害"><span class="nav-number">2.3.</span> <span class="nav-text">危害</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#解决方法"><span class="nav-number">2.4.</span> <span class="nav-text">解决方法</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#总结"><span class="nav-number">2.5.</span> <span class="nav-text">总结</span></a></li></ol></li></ol></div>
             
 
           </div>
