@@ -252,6 +252,350 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/06/golang默认打开RESUSEADDR选项/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/09/06/golang默认打开RESUSEADDR选项/" itemprop="url">golang默认打开RESUSEADDR选项</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-06T12:41:37+08:00">
+                2019-09-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机网络</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/网络编程/" itemprop="url" rel="index">
+                    <span itemprop="name">网络编程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="REUSEADDR"><a href="#REUSEADDR" class="headerlink" title="REUSEADDR"></a>REUSEADDR</h3><ul>
+<li><p>c语言中的socket选项，默认是0即不打开</p>
+</li>
+<li><p>主要用于服务端如果在运行过程中出现主动关闭情况时（一般情况都是被动关闭），服务端的在本机的监听端口将处于TIME_WAIT状态，此时如果重启服务器的话将出现bind: address already in use错误，必须等2MSL的时间后，才能重启成功</p>
+</li>
+<li><p>打开REUSEADDR选项后，即使监听端口处于TIME_WAIT状态，依然可以正常bind并启动成功</p>
+</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">int</span> on = <span class="number">1</span>;</span><br><span class="line">setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, &amp;on, <span class="keyword">sizeof</span>(on));</span><br></pre></td></tr></table></figure>
+
+<h3 id="echoserver主动关闭连接实验"><a href="#echoserver主动关闭连接实验" class="headerlink" title="echoserver主动关闭连接实验"></a>echoserver主动关闭连接实验</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"flag"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	host <span class="keyword">string</span></span><br><span class="line">	port <span class="keyword">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	flag.StringVar(&amp;host, <span class="string">"h"</span>, <span class="string">""</span>, <span class="string">"host"</span>)</span><br><span class="line">	flag.StringVar(&amp;port, <span class="string">"p"</span>, <span class="string">"3333"</span>, <span class="string">"port"</span>)</span><br><span class="line"></span><br><span class="line">	flag.Parse()</span><br><span class="line">	<span class="keyword">var</span> l *net.TCPListener</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> conn net.Conn</span><br><span class="line"></span><br><span class="line">	tcpAddr, err := net.ResolveTCPAddr(<span class="string">"tcp"</span>, host+<span class="string">":"</span>+port)</span><br><span class="line">	checkError(err)</span><br><span class="line"></span><br><span class="line">	l, err = net.ListenTCP(<span class="string">"tcp"</span>, tcpAddr)</span><br><span class="line">	checkError(err)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		conn, err = l.Accept()</span><br><span class="line">		fmt.Printf(<span class="string">"client:%s connect\n"</span>, conn.RemoteAddr())</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintln(os.Stderr, err.Error())</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">go</span> handleClient(conn)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleClient</span><span class="params">(conn net.Conn)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> buf = <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">1024</span>)</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">var</span> readstr <span class="keyword">string</span></span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		n, err = conn.Read(buf)</span><br><span class="line">		conn.Close()</span><br><span class="line">		<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">			fmt.Printf(<span class="string">"client:%s closed\n"</span>, conn.RemoteAddr().String())</span><br><span class="line">			conn.Close()</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			readstr = strings.ToUpper(<span class="keyword">string</span>(buf[<span class="number">0</span>:n]))</span><br><span class="line">			_, err = conn.Write([]<span class="keyword">byte</span>(readstr))</span><br><span class="line">			checkError(err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">checkError</span><span class="params">(err error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"Fatal error:%s\n"</span>, err.Error())</span><br><span class="line">		os.Exit(<span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>​    echoserver读到客户端数据时，变直接调用conn.close()主动关闭（为了模拟服务端监听端口出现TIME_WAIT）echoserver以本地网卡10.129.21.36，并监听端口5000 启动，使用nc 127.0.0.1 8000 进行连接，端口占用情况如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tcp     0       10.129.21.36:5000   0.0.0.0:*         LISTEN      30236/./echoserver  </span><br><span class="line">tcp     0       10.129.21.36:5000   127.0.0.1:8000    ESTABLISHED 30236/./echoserver  </span><br><span class="line">tcp     0       127.0.0.1:8000      10.129.21.36:5000 ESTABLISHED 30254/./echoclient</span><br></pre></td></tr></table></figure>
+
+<p>​    在nc中输入任意字符串并回车后,echoserver会立即主动关闭连接并退出进程，监听端口5000出现TIME_WAIT状态</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">tcp     0       10.129.21.36:5000   127.0.0.1:8000    TIME_WAIT   -</span><br></pre></td></tr></table></figure>
+
+<p>​    此时如果echoserver进程重新以5000监听端口启动，不会报错，启动成功，并且用netstat查看xuanx10.129.21.36这张网卡的5000端口同时出现Listen 和TIME_WAIT状态</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">tcp     0       10.129.21.36:5000    0.0.0.0:*         LISTEN     31281/./echoserver  </span><br><span class="line">tcp     0       10.129.21.36:5000    127.0.0.1:8000    TIME_WAIT  -</span><br></pre></td></tr></table></figure>
+
+<p>​    可以看到新的echoserver进程（pid为31281，之前的pid为30236）正常启动，并监听在5000端口，同时之前的echoserver进程的127.0.0.1:8000-&gt;10.129.21.36:5000的连接由于服务端主动关闭连接动作而导致10.129.21.36的5000端口变成TIME_WAIT状态，但是新的echoserver进行依然能使用10.129.21.36:5000正常绑定和监听</p>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><p>​    从实验结果来看，golang的net包在创建server时，默认启用REUSEADDR这个socket选项</p>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/06/golang实现echoserver/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/09/06/golang实现echoserver/" itemprop="url">golang实现echoserver</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-06T09:56:40+08:00">
+                2019-09-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/" itemprop="url" rel="index">
+                    <span itemprop="name">计算机网络</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/计算机网络/网络编程/" itemprop="url" rel="index">
+                    <span itemprop="name">网络编程</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="echoserver"><a href="#echoserver" class="headerlink" title="echoserver"></a>echoserver</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"flag"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">	<span class="string">"strings"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> (</span><br><span class="line">	host <span class="keyword">string</span></span><br><span class="line">	port <span class="keyword">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	flag.StringVar(&amp;host, <span class="string">"h"</span>, <span class="string">""</span>, <span class="string">"host"</span>)</span><br><span class="line">	flag.StringVar(&amp;port, <span class="string">"p"</span>, <span class="string">"3333"</span>, <span class="string">"port"</span>)</span><br><span class="line"></span><br><span class="line">	flag.Parse()</span><br><span class="line">	<span class="keyword">var</span> l *net.TCPListener</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> conn net.Conn</span><br><span class="line"></span><br><span class="line">	tcpAddr, err := net.ResolveTCPAddr(<span class="string">"tcp"</span>, host+<span class="string">":"</span>+port)</span><br><span class="line">	checkError(err)</span><br><span class="line"></span><br><span class="line">	l, err = net.ListenTCP(<span class="string">"tcp"</span>, tcpAddr)</span><br><span class="line">	checkError(err)</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		conn, err = l.Accept()</span><br><span class="line">		fmt.Printf(<span class="string">"client:%s connect\n"</span>, conn.RemoteAddr())</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintln(os.Stderr, err.Error())</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">go</span> handleClient(conn)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleClient</span><span class="params">(conn net.Conn)</span></span> &#123;</span><br><span class="line">	<span class="keyword">var</span> buf = <span class="built_in">make</span>([]<span class="keyword">byte</span>, <span class="number">1024</span>)</span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">	<span class="keyword">var</span> readstr <span class="keyword">string</span></span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		n, err = conn.Read(buf)</span><br><span class="line">		<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">			fmt.Printf(<span class="string">"client:%s closed\n"</span>, conn.RemoteAddr().String())</span><br><span class="line">			conn.Close()</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">			readstr = strings.ToUpper(<span class="keyword">string</span>(buf[<span class="number">0</span>:n]))</span><br><span class="line">			_, err = conn.Write([]<span class="keyword">byte</span>(readstr))</span><br><span class="line">			checkError(err)</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">checkError</span><span class="params">(err error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr, <span class="string">"Fatal error:%s\n"</span>, err.Error())</span><br><span class="line">		os.Exit(<span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>接受客户端连接后起一个协程处理客户端发来的数据</li>
+<li>对客户端发来的英文字符串转大写后回写客户端</li>
+<li>服务端执行被动关闭，当客户端发起主动关闭时，服务端将读到EOF，并执行被动关闭</li>
+</ul>
+<h3 id="echoclient"><a href="#echoclient" class="headerlink" title="echoclient"></a>echoclient</h3><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"bufio"</span></span><br><span class="line">	<span class="string">"flag"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line">	<span class="string">"os"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span>(</span><br><span class="line">	remoteAddr <span class="keyword">string</span></span><br><span class="line">	remotePort <span class="keyword">string</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    </span><br><span class="line">	flag.StringVar(&amp;remoteAddr,<span class="string">"h"</span>,<span class="string">"127.0.0.1"</span>,<span class="string">"remoteAddr"</span>)</span><br><span class="line">	flag.StringVar(&amp;remotePort,<span class="string">"p"</span>,<span class="string">"3333"</span>,<span class="string">"remotePort"</span>)</span><br><span class="line">    </span><br><span class="line">	<span class="keyword">var</span> err error</span><br><span class="line">	<span class="keyword">var</span> tcpAddr *net.TCPAddr</span><br><span class="line">	<span class="keyword">var</span> conn net.Conn</span><br><span class="line">	<span class="keyword">var</span> buf =<span class="built_in">make</span>([]<span class="keyword">byte</span>,<span class="number">1024</span>)</span><br><span class="line">	<span class="keyword">var</span> temp []<span class="keyword">byte</span></span><br><span class="line">	<span class="keyword">var</span> inputReader=bufio.NewReader(os.Stdin)</span><br><span class="line">	<span class="keyword">var</span> n <span class="keyword">int</span></span><br><span class="line">    </span><br><span class="line">	tcpAddr,err=net.ResolveTCPAddr(<span class="string">"tcp"</span>,remoteAddr+<span class="string">":"</span>+remotePort)</span><br><span class="line">	checkError(err)</span><br><span class="line">	conn,err=net.DialTCP(<span class="string">"tcp"</span>,<span class="literal">nil</span>,tcpAddr)</span><br><span class="line">	checkError(err)</span><br><span class="line">    </span><br><span class="line">	<span class="keyword">for</span> <span class="literal">true</span> &#123;</span><br><span class="line">		temp,err=inputReader.ReadBytes(<span class="string">'\n'</span>)</span><br><span class="line">		checkError(err)</span><br><span class="line">		_,err=conn.Write(temp[:<span class="built_in">len</span>(temp)<span class="number">-1</span>])</span><br><span class="line">		<span class="keyword">if</span> err!=<span class="literal">nil</span> &#123;</span><br><span class="line">			fmt.Fprintf(os.Stderr,<span class="string">"Fatal error:%s\n"</span>,err.Error())</span><br><span class="line">			conn.Close()</span><br><span class="line">			os.Exit(<span class="number">1</span>)</span><br><span class="line">		&#125;</span><br><span class="line">		n,err=conn.Read(buf)</span><br><span class="line">		<span class="keyword">if</span> err == io.EOF &#123;</span><br><span class="line">			fmt.Println(<span class="string">"server closed"</span>)</span><br><span class="line">			conn.Close()</span><br><span class="line">			os.Exit(<span class="number">0</span>)</span><br><span class="line">		&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">			fmt.Println(<span class="keyword">string</span>(buf[<span class="number">0</span>:n]))</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">checkError</span><span class="params">(err error)</span></span> &#123;</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		fmt.Fprintf(os.Stderr,<span class="string">"Fatal error:%s\n"</span>,err.Error())</span><br><span class="line">		os.Exit(<span class="number">1</span>)</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>客户端读入标准输入的数据发送服务端，接受服务端回写的数据到标准输出</li>
+<li>如果服务端退出，客户端将读到EOF，客户端同时关闭连接并退出</li>
+</ul>
+<h3 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h3><ul>
+<li>一个最简单的使用golang实现的c/s模型echoserver，虽然看起来简单，但其实只是golang对c语言中epoll多路复用模型的封装</li>
+<li>今后的网络编程的学习中将以这个echoserver为例，对场景的问题场景进行复现和分析</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/03/TIMEWAIT和端口复用/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1750,7 +2094,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">9</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
