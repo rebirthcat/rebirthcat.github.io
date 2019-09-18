@@ -252,6 +252,196 @@
   
   
   <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/20/BIOS到MBR/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+                
+                <a class="post-title-link" href="/2019/08/20/BIOS到MBR/" itemprop="url">BIOS到MBR</a></h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-08-20T12:40:33+08:00">
+                2019-08-20
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/linux系统原理/" itemprop="url" rel="index">
+                    <span itemprop="name">linux系统原理</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        
+          
+            <h3 id="本章知识汇总"><a href="#本章知识汇总" class="headerlink" title="本章知识汇总"></a>本章知识汇总</h3><h4 id="实模式下1MB寻址范围布局"><a href="#实模式下1MB寻址范围布局" class="headerlink" title="实模式下1MB寻址范围布局"></a>实模式下1MB寻址范围布局</h4><p><img src="/images/1.jpg" alt="1.jpg"></p>
+<h4 id="什么叫“程序载入内存”"><a href="#什么叫“程序载入内存”" class="headerlink" title="什么叫“程序载入内存”"></a>什么叫“程序载入内存”</h4><ol>
+<li>程序被加载器（软件或硬件）加载到内存的某个区域</li>
+<li>CPU的cs:ip寄存器被指向这个程序的起始地址</li>
+</ol>
+<h4 id="主板上的物理内存不是cpu寻址的全部范围"><a href="#主板上的物理内存不是cpu寻址的全部范围" class="headerlink" title="主板上的物理内存不是cpu寻址的全部范围"></a>主板上的物理内存不是cpu寻址的全部范围</h4><p><img src="/images/3.jpg" alt="2.jpg"></p>
+<ol>
+<li>地址总线宽度决定计算机在寻址上可以到达的疆域，寻址的内容不仅包括主板上的物理内存，虽然大部分的地址范围都被映射到了主板内存上，但cpu仍然需要保留一部分地址范围另做他用，包括映射保存BIOS代码的ROM，显卡、磁盘、键盘等外设中的内存等，这就是为什么我们购买的4Gb内存条，在32位操作系统（cpu地址总线也是32位）中安装完后只显示3.8G，并不是显卡制造商“掺水”，而是因为32位地址范围不能全部分配给4Gb主板内存，还有留出一部分地址范围用作映射ROM和外设内存。</li>
+<li>举个例子：当cs:ip中的内容落在映射到BIOS的rom范围中，便到达了直接执行BIOS中的目的，即在执行BIOS时，cpu是直接从静态ROM中取指令，不是去主板内存中取指令，因为BIOS根本就不在内存中。cpu在硬件级别做了强制约定，只要寻址落在了这个特殊的范围，就是直接去这块保持有BIOS指令的ROM中取指令和数据</li>
+</ol>
+<h4 id="BIOS是如何启动的"><a href="#BIOS是如何启动的" class="headerlink" title="BIOS是如何启动的"></a>BIOS是如何启动的</h4><ol>
+<li><p>BIOS存在于静态ROM上，而非主板内存中，BIOS本质上也是一段代码指令，BIOS的入口地址是0xFFFFO</p>
+</li>
+<li><p>机器加电时，进入实模式，cpu的指令指针寄存器被强制设置成0xF000:0xFFF0,即0xF000*4+0xFFF0=0xFFFF0</p>
+</li>
+<li><p>0xFFFF0离实模式最大寻址范围的0XFFFFF（1MB）只有16字节，根本无法容纳BIOS的所有指令，所以该处的指令仅仅是一个跳转指令jmp far f000:e05b=0xfe05b，cpu跳转到此处后，开始执行BIOS的实质工作内容</p>
+</li>
+</ol>
+<h4 id="BIOS做了哪些重要的事情"><a href="#BIOS做了哪些重要的事情" class="headerlink" title="BIOS做了哪些重要的事情"></a>BIOS做了哪些重要的事情</h4><ol>
+<li>检测、初始化硬件</li>
+<li>建立中断向量表，可以通过”中断号”进行相关硬件调用，仅仅是简单基础的I/O操作，这也是BIOS命名的由来（基础输入输出系统）</li>
+<li>校验启动盘位于0盘0道1扇区的内容是否是mbr，判断这512字节中的最后两个字节是否是魔数0x55，0xaa</li>
+<li>校验成功，确定该扇区内容是MBR，则将该扇区的内容即MBR加载到0x7c00(所谓的加载其实就是BIOS读取硬盘中该扇区的内容，并将该扇区的内容拷贝到0x7c00处，和把一段内存拷贝到另一段内存没有本质的区别)。</li>
+<li>加载完MBR到0x7c00后，执行jmp 0:0x7c00跳转到0x7c00，MRB自此便登上计算机生命的舞台</li>
+</ol>
+<h4 id="MBR开头的sction-MBR-vstart-0x7c00"><a href="#MBR开头的sction-MBR-vstart-0x7c00" class="headerlink" title="MBR开头的sction MBR vstart=0x7c00"></a>MBR开头的sction MBR vstart=0x7c00</h4><ol>
+<li><p>该指令的作用是告诉编译器，本源码文件在编译时，将起始地址编译为0x7c00，然后后面的指令和数据的地址都是以0x7c00为基准进行编址</p>
+</li>
+<li><p>MBR运行在实模式下，实模式中的地址对应与内存中的真实物理地址，在BIOS中已经将MBR从磁盘上拷贝到内存中的0x7c00，为了能正确执行和寻址MBR中的指令和数据，必须将程序的起始地址编译成0x7c00。</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">;主引导程序 </span></span><br><span class="line"><span class="comment">;------------------------------------------------------------</span></span><br><span class="line"><span class="meta">SECTION</span> MBR vstart=<span class="number">0x7c00</span>         </span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ax</span>,<span class="built_in">cs</span>      </span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ds</span>,<span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">es</span>,<span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ss</span>,<span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">fs</span>,<span class="built_in">ax</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">sp</span>,<span class="number">0x7c00</span></span><br><span class="line"></span><br><span class="line"><span class="comment">; 清屏 利用0x06号功能，上卷全部行，则可清屏。</span></span><br><span class="line"><span class="comment">; -----------------------------------------------------------</span></span><br><span class="line"><span class="comment">;INT 0x10   功能号:0x06	   功能描述:上卷窗口</span></span><br><span class="line"><span class="comment">;------------------------------------------------------</span></span><br><span class="line"><span class="comment">;输入：</span></span><br><span class="line"><span class="comment">;AH 功能号= 0x06</span></span><br><span class="line"><span class="comment">;AL = 上卷的行数(如果为0,表示全部)</span></span><br><span class="line"><span class="comment">;BH = 上卷行属性</span></span><br><span class="line"><span class="comment">;(CL,CH) = 窗口左上角的(X,Y)位置</span></span><br><span class="line"><span class="comment">;(DL,DH) = 窗口右下角的(X,Y)位置</span></span><br><span class="line"><span class="comment">;无返回值：</span></span><br><span class="line">   <span class="keyword">mov</span>     <span class="built_in">ax</span>, <span class="number">0x600</span></span><br><span class="line">   <span class="keyword">mov</span>     <span class="built_in">bx</span>, <span class="number">0x700</span></span><br><span class="line">   <span class="keyword">mov</span>     <span class="built_in">cx</span>, <span class="number">0</span>           <span class="comment">; 左上角: (0, 0)</span></span><br><span class="line">   <span class="keyword">mov</span>     <span class="built_in">dx</span>, <span class="number">0x184f</span>	   <span class="comment">; 右下角: (80,25),</span></span><br><span class="line">			   <span class="comment">; VGA文本模式中,一行只能容纳80个字符,共25行。</span></span><br><span class="line">			   <span class="comment">; 下标从0开始,所以0x18=24,0x4f=79</span></span><br><span class="line">   <span class="keyword">int</span>     <span class="number">0x10</span>            <span class="comment">; int 0x10</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;;;;;;;;;    下面这三行代码是获取光标位置    ;;;;;;;;;</span></span><br><span class="line"><span class="comment">;.get_cursor获取当前光标位置,在光标位置处打印字符.</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="number">ah</span>, <span class="number">3</span>		<span class="comment">; 输入: 3号子功能是获取光标位置,需要存入ah寄存器</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="number">bh</span>, <span class="number">0</span>		<span class="comment">; bh寄存器存储的是待获取光标的页号</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">int</span> <span class="number">0x10</span>		<span class="comment">; 输出: ch=光标开始行,cl=光标结束行</span></span><br><span class="line">			<span class="comment">; dh=光标所在行号,dl=光标所在列号</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;;;;;;;;;    获取光标位置结束    ;;;;;;;;;;;;;;;;</span></span><br><span class="line"></span><br><span class="line"><span class="comment">;;;;;;;;;     打印字符串    ;;;;;;;;;;;</span></span><br><span class="line">   <span class="comment">;还是用10h中断,不过这次是调用13号子功能打印字符串</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ax</span>, message </span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">bp</span>, <span class="built_in">ax</span>		<span class="comment">; es:bp 为串首地址, es此时同cs一致，</span></span><br><span class="line">			<span class="comment">; 开头时已经为sreg初始化</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">; 光标位置要用到dx寄存器中内容,cx中的光标位置可忽略</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">cx</span>, <span class="number">5</span>		<span class="comment">; cx 为串长度,不包括结束符0的字符个数</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">ax</span>, <span class="number">0x1301</span>	<span class="comment">; 子功能号13是显示字符及属性,要存入ah寄存器,</span></span><br><span class="line">			<span class="comment">; al设置写字符方式 ah=01: 显示字符串,光标跟随移动</span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">bx</span>, <span class="number">0x2</span>		<span class="comment">; bh存储要显示的页号,此处是第0页,</span></span><br><span class="line">			<span class="comment">; bl中是字符属性, 属性黑底绿字(bl = 02h)</span></span><br><span class="line">   <span class="keyword">int</span> <span class="number">0x10</span>		<span class="comment">; 执行BIOS 0x10 号中断</span></span><br><span class="line"><span class="comment">;;;;;;;;;      打字字符串结束	 ;;;;;;;;;;;;;;;</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">jmp</span> $		<span class="comment">; 使程序悬停在此</span></span><br><span class="line"></span><br><span class="line">   message <span class="built_in">db</span> <span class="string">"1 MBR"</span></span><br><span class="line">   <span class="built_in">times</span> <span class="number">510</span>-($-$$) <span class="built_in">db</span> <span class="number">0</span></span><br><span class="line">   <span class="built_in">db</span> <span class="number">0x55</span>,<span class="number">0xaa</span></span><br></pre></td></tr></table></figure>
+
+
+
+</li>
+</ol>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ul>
+<li>&lt;&lt;操作系统真相还原&gt;&gt;</li>
+</ul>
+
+          
+        
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+
+      
+
+      
+      
+        <div class="post-eof"></div>
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+    
+      
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
     <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/08/15/nginx通过用户ip限制访问权限/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -460,7 +650,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">11</span>
+                  <span class="site-state-item-count">12</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -471,7 +661,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">7</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>

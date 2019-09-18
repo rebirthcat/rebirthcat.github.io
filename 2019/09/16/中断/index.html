@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="os,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="中断相关概念中断分类 外部中断：来自CPU外部的中断，中断源通常是某个硬件，所以外部中断又称硬中断。CPU通过INTR和NMI两个中断信号线接受来自的外部中断，外部中断根据这两条信号线的不同又分为： 可屏蔽中断：来自INTR向CPU发送的中断，键盘，硬盘，网卡，打印机等外设通过8259A的 不可屏蔽中断：来自NMI向CPU发送的中断，电源掉电，内存读写错误，总线奇偶校验错误   内部中断：由CPU">
+<meta name="keywords" content="os">
+<meta property="og:type" content="article">
+<meta property="og:title" content="中断">
+<meta property="og:url" content="http://yoursite.com/2019/09/16/中断/index.html">
+<meta property="og:site_name" content="Elvis">
+<meta property="og:description" content="中断相关概念中断分类 外部中断：来自CPU外部的中断，中断源通常是某个硬件，所以外部中断又称硬中断。CPU通过INTR和NMI两个中断信号线接受来自的外部中断，外部中断根据这两条信号线的不同又分为： 可屏蔽中断：来自INTR向CPU发送的中断，键盘，硬盘，网卡，打印机等外设通过8259A的 不可屏蔽中断：来自NMI向CPU发送的中断，电源掉电，内存读写错误，总线奇偶校验错误   内部中断：由CPU">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/36.jpg">
+<meta property="og:image" content="http://yoursite.com/images/37.jpg">
+<meta property="og:image" content="http://yoursite.com/images/38.jpg">
+<meta property="og:image" content="http://yoursite.com/images/39.png">
+<meta property="og:image" content="http://yoursite.com/images/41.jpg">
+<meta property="og:image" content="http://yoursite.com/images/42.jpg">
+<meta property="og:image" content="http://yoursite.com/images/43.jpg">
+<meta property="og:image" content="http://yoursite.com/images/44.jpg">
+<meta property="og:image" content="http://yoursite.com/images/IMG_0065.JPG">
+<meta property="og:updated_time" content="2019-09-18T03:00:13.301Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="中断">
+<meta name="twitter:description" content="中断相关概念中断分类 外部中断：来自CPU外部的中断，中断源通常是某个硬件，所以外部中断又称硬中断。CPU通过INTR和NMI两个中断信号线接受来自的外部中断，外部中断根据这两条信号线的不同又分为： 可屏蔽中断：来自INTR向CPU发送的中断，键盘，硬盘，网卡，打印机等外设通过8259A的 不可屏蔽中断：来自NMI向CPU发送的中断，电源掉电，内存读写错误，总线奇偶校验错误   内部中断：由CPU">
+<meta name="twitter:image" content="http://yoursite.com/images/36.jpg">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/16/中断/">
+
+
+
+
+
+  <title>中断 | Elvis</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Elvis</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/16/中断/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">中断</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-16T20:10:42+08:00">
+                2019-09-16
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/linux系统原理/" itemprop="url" rel="index">
+                    <span itemprop="name">linux系统原理</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="中断相关概念"><a href="#中断相关概念" class="headerlink" title="中断相关概念"></a>中断相关概念</h3><h4 id="中断分类"><a href="#中断分类" class="headerlink" title="中断分类"></a>中断分类</h4><ol>
+<li>外部中断：来自CPU外部的中断，中断源通常是某个硬件，所以外部中断又称硬中断。CPU通过INTR和NMI两个中断信号线接受来自的外部中断，外部中断根据这两条信号线的不同又分为：<ul>
+<li>可屏蔽中断：来自INTR向CPU发送的中断，键盘，硬盘，网卡，打印机等外设通过8259A的</li>
+<li>不可屏蔽中断：来自NMI向CPU发送的中断，电源掉电，内存读写错误，总线奇偶校验错误</li>
+</ul>
+</li>
+<li>内部中断：由CPU内部或者程序指令发起的中断，其中内部中断又分为：<ul>
+<li>软中断：软件主动发起的中断，int指令发起的中断，系统调用就是通过int 80并将子功能号写入eax而发起的软中 断，int 3是调试段点指令，也是软中断，等等</li>
+<li>异常：指令执行期间CPU内部产生的错误引起的，比如缺页异常，就是非常常见的内部中断，其对应一段中断处理程序，该程序可以将磁盘上的页重新加载到内存；比如除0错误，CPU在做除法运算时，发现分母为0，就会引发0号异常，也即0号中断</li>
+<li>内部中断不可屏蔽，也就是说系统调用和异常都是不可屏蔽的中断</li>
+</ul>
+</li>
+</ol>
+<h4 id="中断向量"><a href="#中断向量" class="headerlink" title="中断向量"></a>中断向量</h4><ul>
+<li>中断向量号是中断描述符表的索引，每个中断向量号对应一个中断描述符，每个中断描述符中记录该中断号对应的中断处理程序的段选择子和偏移量，通过这个选择子中GDT中索引得到段描述符，然后在通过偏移地址在该段中得到中段处理程序的入口地址</li>
+<li>异常和不可屏蔽中断的中断向量号是有CPU自动提供，而来自外部设备的可屏蔽中断的中断号是由中断代理（8259A芯片）提供的，软中断是由程序指令提供的（比如系统调用的库函数中必然会有int 80这条汇编指令，80就是中断号，是内核代码或者说是操作系统提供的，操作系统本身也是软件，所以也叫软中断）</li>
+</ul>
+<h4 id="中断屏蔽"><a href="#中断屏蔽" class="headerlink" title="中断屏蔽"></a>中断屏蔽</h4><h5 id="可屏蔽中断"><a href="#可屏蔽中断" class="headerlink" title="可屏蔽中断"></a>可屏蔽中断</h5><ul>
+<li>可屏蔽中断是通过INTR引脚进入CPU的，外部设备如硬盘，网卡等发出的中断都是可屏蔽中断。即这些设备产生的中断CPU可以不必理会，因为它不会让系统宕机</li>
+<li>通过eflags寄存器的IF位可以将这些外部设备的中断全部屏蔽，一般外设中断处理程序都分为上半部和下半部，上半部通常都是在关中断的情况下执行，因为上半部所要做的事情非常紧急，比如网卡的缓冲区通常较小，网络数据到达网卡缓冲区后，需要尽快的拷贝到内核缓冲区，否则网卡缓冲区一旦写满，后来的网络包将被丢弃</li>
+</ul>
+<h5 id="不可屏蔽中断"><a href="#不可屏蔽中断" class="headerlink" title="不可屏蔽中断"></a>不可屏蔽中断</h5><ul>
+<li>不可屏蔽中断是通过NMI引脚进入CPU的，表示系统发生了致命的错误，之所以不可屏蔽是因为这些错误会导致系统停止运行。</li>
+<li>常见的不可屏蔽的外部中断（或者叫错误）有断电，内存读写错误等</li>
+<li>内部中断都是不可屏蔽的（系统调用和异常都是不可屏蔽中断的）</li>
+</ul>
+<p><img src="/images/36.jpg" alt="36.jpg"></p>
+<h4 id="中断描述符表"><a href="#中断描述符表" class="headerlink" title="中断描述符表"></a>中断描述符表</h4><p>​    中断描述符表（IDT）是保护模式下用于存储中断处理程序入口的表（数组），当CPU接受到一个中断时，通过中断向量号在IDT中索引对应的中断门描述符，在该门描述符中找到中断处理程序的段选择子和偏移地址，并进行相关的特权级检查，检查通过后执行中断处理程序</p>
+<h4 id="中断门描述符"><a href="#中断门描述符" class="headerlink" title="中断门描述符"></a>中断门描述符</h4><p><img src="/images/37.jpg" alt="37.jpg"></p>
+<p>​    中断门包含中断处理程序所在段的段选择子和段内偏移地址，通过中断门进行中断后，eflags中的IF位自动置0，也就是所有的中断处理程序在进入中断的那一刻都是默认屏蔽所有中断的。当然，可以通过某些指令在中断处理函数的内部就将eflags中的IF位置1，即打开中断(例如外设的中断处理程序上半部是在屏蔽中断的情况下执行的，下半部是在开中断情况下执行)</p>
+<h4 id="中断描述表寄存器（IDTR）"><a href="#中断描述表寄存器（IDTR）" class="headerlink" title="中断描述表寄存器（IDTR）"></a>中断描述表寄存器（IDTR）</h4><ul>
+<li>CPU内部有中断描述符表寄存器（IDTR），该寄存器48位，0<del>15位是表界限，16</del>47是中断描述符表的32位线性地址。16位表界限64KB，中断描述符8字节，所有最大支持64KB/8=8192个描述符，但是在32位系统中只支持256个描述符</li>
+<li>设置IDTR的指令：lidt 48位内存数据</li>
+</ul>
+<h4 id="中断处理过程及特权检查"><a href="#中断处理过程及特权检查" class="headerlink" title="中断处理过程及特权检查"></a>中断处理过程及特权检查</h4><p>​    硬中断（外设中断）的过程通常分为CPU外部和CPU内部，CPU外部过程是外设想8259A发送信号，然后8259A将中断向量号发送给CPU的过程；CPU内部指的是CPU获得中断向量号后开始执行中断处理程序的过程。软中断和异常没有外部过程，只有内部过程，因为他们都是内部中断，中断向量号不需要中断代理提供。这里所讨论的中断处理过程只是内部过程，外部过程稍后在中断代理8259A的部分会有详细介绍</p>
+<ol>
+<li><p>处理器根据中断向量号定位中断门描述符：中断向量号*8+IDTR高32位</p>
+</li>
+<li><p>处理器进行特权级检查：</p>
+<ul>
+<li>如果是软中断，例如用户程序使用系统调用，则当前特权级必须在门描述符的DPL和门中目标代码段的DPL之间，即数值上  门中目标代码段的DPL&lt; 用户程序的CPL&lt;=门描述符的DPL</li>
+<li>如果是外设和异常引起的中断，只检查CPL和门中目标代码段，要求CPL权限小于目标代码段DPL，即数值上CPL&gt;DPL</li>
+</ul>
+</li>
+<li><p>中断发生后，eflags中IF位被值0，避免中断嵌套。默认情况下，处理器会在无人打扰的方式下执行中断处理函数，至于什么时候打开中断，由中断处理程序自己决定（即内核自己决定什么时候打开中断），CPU为内核提供可以随时开关中断指令：</p>
+<ul>
+<li>关中断指令：cli，将IF位置0</li>
+<li>开中断指令：sti，将IF位置1</li>
+</ul>
+</li>
+<li><p>中断处理程序执行之前进行任务现场保护，这在稍后会单独介绍</p>
+</li>
+<li><p>执行中断处理程序</p>
+</li>
+<li><p>中断返回，即iret指令，主要是对第4步中的任务进行恢复现场</p>
+<p><img src="/images/38.jpg" alt="38.jpg"></p>
+</li>
+</ol>
+<h4 id="中断现场保护"><a href="#中断现场保护" class="headerlink" title="中断现场保护"></a>中断现场保护</h4><h5 id="特权级发生变化"><a href="#特权级发生变化" class="headerlink" title="特权级发生变化"></a>特权级发生变化</h5><p>​    中断发生时，如果当前运行的是用户程序，比如用户程序通过80中断进行系统调用，当前任务的特权级会向高特权级转移，需要去TSS中寻找高特权级的栈，所以必须将原特权级的SS和EIP入栈到高特权级栈中，一下是具体要做的事情：</p>
+<ol>
+<li>处理器临时保存当前旧栈SS和EIP值，记作SS_old和EIP_old</li>
+<li>在TSS段中找到新的高特权级栈，压入SS_old和EIP_old</li>
+<li>在新栈中压入EFLAGS寄存器</li>
+<li>由于要切换目标代码段，CS寄存器和EIP将被重新修改为中断处理函数的段选择子和偏移地址，所以为了恢复原任务的执行流程，要将CS_old和EIP_old压入新栈</li>
+<li>某些异常会有错误码，则会压入ERROR_CODE</li>
+</ol>
+<p><img src="/images/39.png" alt="39.jpg"></p>
+<h5 id="特权级不发生变化"><a href="#特权级不发生变化" class="headerlink" title="特权级不发生变化"></a>特权级不发生变化</h5><p>​    中断发生是，CPU处于内核态，且处于开中断状态，比如网卡中断的下半部的网络协议栈的处理过程中，CPU已经处于0特权级，使用的栈就是0特权级的栈，进入中断后，还是使用0特权级的栈，所以该情况下不需要压入SS_old和EIP_old，其他过程相同，最后栈的结果如下图：</p>
+<p><img src="/images/41.jpg" alt="41.jpg"></p>
+<h4 id="中断现场恢复"><a href="#中断现场恢复" class="headerlink" title="中断现场恢复"></a>中断现场恢复</h4><ul>
+<li>中断返回指令iret，专用于从中断处理程序返回</li>
+<li>中断返回指令是中断现场保护的逆过程，所以当执行iret前，一定要保证栈顶数据的正确性，且从栈顶往上的顺序是EIP,CS,EFLAGS,如果有特权级变化，还有ESP,SS</li>
+<li>如果中断现场保护压入了错误码（异常中断），必须手动将其跳过，让栈顶指针指向错误码之上的EIP</li>
+<li>当栈顶指针指向EIP后，执行iret将做如下动作：<ol>
+<li>弹出EIP_old，CS_old,判断是否需要改变特权级，然后进行特权级检查，检查通过，加载到EIP，CS寄存器</li>
+<li>弹出EFLAGS到eflags寄存器中</li>
+<li>如果在第一步中判断处需要改变特权级，即往低特权级级转移，也就是需要恢复旧栈，则弹出ESP_old和SS_old到寄存器ESP和SS，并进行特权级检查</li>
+<li>检查数据段寄存器DS，ES，FS和GS内容，如果他们之中，某个寄存器选择子所指向的数据段描述符的DPL权限比返回后的CPL（CS.RPL）高，处理器将吧数值0填充到相应的段寄存器</li>
+</ol>
+</li>
+</ul>
+<h3 id="可编程中断控制器8259A"><a href="#可编程中断控制器8259A" class="headerlink" title="可编程中断控制器8259A"></a>可编程中断控制器8259A</h3><h4 id="功能"><a href="#功能" class="headerlink" title="功能"></a>功能</h4><ul>
+<li>用于管理和控制可屏蔽中断，即屏蔽外设中断，对多个外设同时到达的中断实行优先级判决，选出优先级最高的外设中断信号，并向CPU提供该外设中断信号对应的中断向量号，以上功能都可以通过编程实现</li>
+</ul>
+<h4 id="外部引脚信号线"><a href="#外部引脚信号线" class="headerlink" title="外部引脚信号线"></a>外部引脚信号线</h4><p><img src="/images/42.jpg" alt="42.jpg"></p>
+<ul>
+<li>intel处理器只能支持256个中断，一片8259A只支持8种外设中断，若要支持更多，只能采取多片级联的方式，个人计算机通常是两片8259A级联，一共支持8+8-1=15个中断（级联的从片占用主片一个IRQ引脚）</li>
+<li>一个中断源对应一个中断引脚，一个中断引脚对应一个中断号，这个中断号的具体值可以通过编程方式进行初始化，当该引脚对应的外生的中断响应后，正常情况下8259A就会把这个引脚对应的中断向量号通过INRT引脚发送给CPU</li>
+</ul>
+<h4 id="内部结构图"><a href="#内部结构图" class="headerlink" title="内部结构图"></a>内部结构图</h4><p><img src="/images/43.jpg" alt="43.jpg"></p>
+<p>​    下面对这些主要引脚和寄存器部件作用进行介绍：</p>
+<ul>
+<li>INT:8259A通过该信号线想CPU发送中断向量号</li>
+<li>INTA:中断响应信号，8259A用其接受来自CPU的中断响应，这样8259A就可以处理其他外设的中断信号</li>
+<li>IMR：中断屏蔽寄存器，用来屏蔽某个外设中断</li>
+<li>IRR，中断请求寄存器，次寄存器中全是等待处理的中断，相当于未处理的中断信号队列</li>
+<li>PR,优先级仲裁器，当有多个中断同时发生时，或有新的中断请求进来时，与正在处理的中断进行比较，找出优先级更高的中断</li>
+<li>ISR：中断服务寄存器，当某个中断正常被处理时，保存次寄存器中</li>
+<li>以上提到的寄存器都是8位，每一位正好对应8259A的8个IRQ引脚，类似位图，这样操作寄存器中的位便表示处理来自对应IRQ接口的中断信号</li>
+</ul>
+<h4 id="8259A的工作流程"><a href="#8259A的工作流程" class="headerlink" title="8259A的工作流程"></a>8259A的工作流程</h4><ol>
+<li>外设发出中断信号到8259A，8259A检查IMR对应的位是否被屏蔽，如果被屏蔽丢弃该信号，否则下一步</li>
+<li>将中断信号送如IRR寄存器，即该中断信号进入了“待处理队列”，即相应位置1</li>
+<li>PR寄存器将从IRR寄存器中置1的所有位对应的中断信号中选择优先级最高的（时钟中断IRQ0的优先级最高，依次递减）</li>
+<li>8259A通过INT引脚想CPU发出INTR信号，CPU知道有外部中断到来，执行完当前指令后，通过INTA接口向8259A发送中断响应信号，表示“我CPU已经准备好了，你可以继续后面的工作了”</li>
+<li>8259A收到4步骤中CPU发来的中断响应信号，立即将刚选出来的优先级最高的中断在ISR中对应的位置1，同时将IRR寄存器中对应的位置0</li>
+<li>CPU再次发送INTR信号给8259A，这次是向8259A索要中断向量号</li>
+<li>8259A通过数据总线发送中断向量号给CPU</li>
+<li>CPU拿到中断向量号后执行索引中断描述符，找到中断处理程序的入口地址并去执行</li>
+<li>如果8259A的EOI通知设置为手动模式，CPU执行玩中断处理程序后向8259A发送EOI的代码，8259A收到EOI通知后，将ISR寄存器对应的位置0</li>
+<li>如果8259A的EOI通知设置为自动模式，当8259A收到第二个INTA信号，也就是CPU索要中断向量号时，8259A会自动将次中断在ISR中对应的位置0</li>
+</ol>
+<h4 id="ISR中断替换"><a href="#ISR中断替换" class="headerlink" title="ISR中断替换"></a>ISR中断替换</h4><p>​    如果在8259A向CPU发送中断向量号之前，此时如果有新的更高优先级的中断到来，则原来ISR中相应的位恢复为0，随后在ISR中将此优先级更高的新中断的位置1，然后将新中断的中断向量号发送给CPU。所以即使某些低优先级的中断信号，经过第一次PR寄存器的选择进入ISR后，仍有肯能被后来的更高优先级的中断信号替换</p>
+<h4 id="8259A编程"><a href="#8259A编程" class="headerlink" title="8259A编程"></a>8259A编程</h4><p>​    8259A的通用名叫可编程中断控制器，所谓的可编程就是内核可以通过指令设置8259A的中断向量号，例如设置IRQ0～IRQ7这8个引脚分别对应的中断向量号，又例如设置8259A的工作方式，像中断检测方式，是否级联，EOI通知方式等等</p>
+<h3 id="中断处理程序"><a href="#中断处理程序" class="headerlink" title="中断处理程序"></a>中断处理程序</h3><h4 id="内核启动中断流程"><a href="#内核启动中断流程" class="headerlink" title="内核启动中断流程"></a>内核启动中断流程</h4><p><img src="/images/44.jpg" alt="44.jpg"></p>
+<ul>
+<li>init_all 是内核用来初始化的函数，其中包括idt_init()初始化中断处理程序，</li>
+<li>idt_init()包括初始化8259A的pic_init()和初始化中断描述符表（也包括中断处理函数，只不过是mock函数，只用来进行演示中断发生）的idt_desc_init()</li>
+<li>最后加载IDT，也就是设置IDTR寄存器的值，用来让CPU获取中断描述表的基地址和界限</li>
+</ul>
+<h4 id="中断处理程序入口"><a href="#中断处理程序入口" class="headerlink" title="中断处理程序入口"></a>中断处理程序入口</h4><figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">bits</span> <span class="number">32</span>]</span><br><span class="line"><span class="meta">%define</span> ERROR_CODE <span class="keyword">nop</span>		 <span class="comment">; 若在相关的异常中cpu已经自动压入了错误码,为保持栈中格式统一,这里不做操作.</span></span><br><span class="line"><span class="meta">%define</span> <span class="meta">ZERO</span> <span class="keyword">push</span> <span class="number">0</span>		 <span class="comment">; 若在相关的异常中cpu没有压入错误码,为了统一栈中格式,就手工压入一个0</span></span><br><span class="line"></span><br><span class="line"><span class="meta">extern</span> idt_table		 <span class="comment">;idt_table是C中注册的中断处理程序数组</span></span><br><span class="line"></span><br><span class="line"><span class="meta">section</span> .data</span><br><span class="line"><span class="meta">global</span> intr_entry_table</span><br><span class="line"><span class="symbol">intr_entry_table:</span></span><br><span class="line"></span><br><span class="line">%macro VECTOR <span class="number">2</span></span><br><span class="line"><span class="meta">section</span> .text</span><br><span class="line">intr<span class="subst">%1</span>entry:		 <span class="comment">; 每个中断处理程序都要压入中断向量号,所以一个中断类型一个中断处理程序，自己知道自己的中断向量号是多少</span></span><br><span class="line"></span><br><span class="line">   <span class="subst">%2</span>				 <span class="comment">; 中断若有错误码会压在eip后面 </span></span><br><span class="line"><span class="comment">; 以下是保存上下文环境</span></span><br><span class="line">   <span class="keyword">push</span> <span class="built_in">ds</span></span><br><span class="line">   <span class="keyword">push</span> <span class="built_in">es</span></span><br><span class="line">   <span class="keyword">push</span> <span class="built_in">fs</span></span><br><span class="line">   <span class="keyword">push</span> <span class="built_in">gs</span></span><br><span class="line">   <span class="keyword">pushad</span>			 <span class="comment">; PUSHAD指令压入32位寄存器,其入栈顺序是: EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">; 如果是从片上进入的中断,除了往从片上发送EOI外,还要往主片上发送EOI </span></span><br><span class="line">   <span class="keyword">mov</span> <span class="built_in">al</span>,<span class="number">0x20</span>                   <span class="comment">; 中断结束命令EOI</span></span><br><span class="line">   <span class="keyword">out</span> <span class="number">0xa0</span>,<span class="built_in">al</span>                   <span class="comment">; 向从片发送</span></span><br><span class="line">   <span class="keyword">out</span> <span class="number">0x20</span>,<span class="built_in">al</span>                   <span class="comment">; 向主片发送</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">push</span> <span class="subst">%1</span>			 <span class="comment">; 不管idt_table中的目标程序是否需要参数,都一律压入中断向量号,调试时很方便</span></span><br><span class="line">   <span class="keyword">call</span> [idt_table + <span class="subst">%1</span>*<span class="number">4</span>]       <span class="comment">; 调用idt_table中的C版本中断处理函数</span></span><br><span class="line">   <span class="keyword">jmp</span> intr_exit</span><br><span class="line"></span><br><span class="line"><span class="meta">section</span> .data</span><br><span class="line">   <span class="built_in">dd</span>    intr<span class="subst">%1</span>entry	 <span class="comment">; 存储各个中断入口程序的地址，形成intr_entry_table数组</span></span><br><span class="line">%endmacro</span><br><span class="line"></span><br><span class="line"><span class="meta">section</span> .text</span><br><span class="line"><span class="meta">global</span> intr_exit</span><br><span class="line"><span class="symbol">intr_exit:</span>	     </span><br><span class="line"><span class="comment">; 以下是恢复上下文环境</span></span><br><span class="line">   <span class="keyword">add</span> <span class="built_in">esp</span>, <span class="number">4</span>			   <span class="comment">; 跳过中断号</span></span><br><span class="line">   <span class="keyword">popad</span></span><br><span class="line">   <span class="keyword">pop</span> <span class="built_in">gs</span></span><br><span class="line">   <span class="keyword">pop</span> <span class="built_in">fs</span></span><br><span class="line">   <span class="keyword">pop</span> <span class="built_in">es</span></span><br><span class="line">   <span class="keyword">pop</span> <span class="built_in">ds</span></span><br><span class="line">   <span class="keyword">add</span> <span class="built_in">esp</span>, <span class="number">4</span>			   <span class="comment">; 跳过error_code</span></span><br><span class="line">   <span class="keyword">iretd</span></span><br><span class="line"></span><br><span class="line">VECTOR <span class="number">0x00</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x01</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x02</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x03</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x04</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x05</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x06</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x07</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x08</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x09</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x0a</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x0b</span>,ERROR_CODE </span><br><span class="line">VECTOR <span class="number">0x0c</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x0d</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x0e</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x0f</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x10</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x11</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x12</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x13</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x14</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x15</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x16</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x17</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x18</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x19</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x1a</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x1b</span>,ERROR_CODE </span><br><span class="line">VECTOR <span class="number">0x1c</span>,<span class="meta">ZERO</span></span><br><span class="line">VECTOR <span class="number">0x1d</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x1e</span>,ERROR_CODE</span><br><span class="line">VECTOR <span class="number">0x1f</span>,<span class="meta">ZERO</span> </span><br><span class="line">VECTOR <span class="number">0x20</span>,<span class="meta">ZERO</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>28行call [idt_table + %1*4] ，idt_table是c语言版本的中断处理函数地址数组。中断处理线程的保护和恢复用汇编代码比较适合，因为保护和恢复都是特定的寄存器值，用c语言难以操作，但是中断处理程序具体做了什么事情可以用c语言，即用在进入中断前会汇编语言进行中断现场保护，进入中断后调用c语言版本的中断处理函数，最后用汇编语言进行中断现场恢复。</li>
+<li>第9行定义中断处理程序数组intr_entry_table，该数组属于.data节，那么根据编译器同名节合并的原理，32行定义的每一个中断处理函数的入口地址都被安排在intr_entry_table里</li>
+<li>中断处理程序数组intr_entry_table和c语言版本中断处理函数数组idt_table通过中断向量号一一对应</li>
+</ul>
+<h4 id="中断初始化"><a href="#中断初始化" class="headerlink" title="中断初始化"></a>中断初始化</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"interrupt.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdint.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"global.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"io.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"print.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PIC_M_CTRL 0x20	       <span class="comment">// 这里用的可编程中断控制器是8259A,主片的控制端口是0x20</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PIC_M_DATA 0x21	       <span class="comment">// 主片的数据端口是0x21</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PIC_S_CTRL 0xa0	       <span class="comment">// 从片的控制端口是0xa0</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PIC_S_DATA 0xa1	       <span class="comment">// 从片的数据端口是0xa1</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> IDT_DESC_CNT 0x21      <span class="comment">// 目前总共支持的中断数</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/*中断门描述符结构体*/</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">gate_desc</span> &#123;</span></span><br><span class="line">   <span class="keyword">uint16_t</span>    func_offset_low_word;</span><br><span class="line">   <span class="keyword">uint16_t</span>    selector;</span><br><span class="line">   <span class="keyword">uint8_t</span>     dcount;   <span class="comment">//此项为双字计数字段，是门描述符中的第4字节。此项固定值，不用考虑</span></span><br><span class="line">   <span class="keyword">uint8_t</span>     attribute;</span><br><span class="line">   <span class="keyword">uint16_t</span>    func_offset_high_word;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 静态函数声明,非必须</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">make_idt_desc</span><span class="params">(struct gate_desc* p_gdesc, <span class="keyword">uint8_t</span> attr, intr_handler function)</span></span>;</span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">gate_desc</span> <span class="title">idt</span>[<span class="title">IDT_DESC_CNT</span>];</span>   <span class="comment">// idt是中断描述符表,本质上就是个中断门描述符数组</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">char</span>* intr_name[IDT_DESC_CNT];		     <span class="comment">// 用于保存异常的名字</span></span><br><span class="line">intr_handler idt_table[IDT_DESC_CNT];	     <span class="comment">// 定义中断处理程序数组.在kernel.S中定义的intrXXentry只是中断处理程序的入口,最终调用的是ide_table中的处理程序</span></span><br><span class="line"><span class="keyword">extern</span> intr_handler intr_entry_table[IDT_DESC_CNT];	    <span class="comment">// 声明引用定义在kernel.S中的中断处理函数入口数组</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 初始化可编程中断控制器8259A */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">pic_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 初始化主片 */</span></span><br><span class="line">   outb (PIC_M_CTRL, <span class="number">0x11</span>);   <span class="comment">// ICW1: 边沿触发,级联8259, 需要ICW4.</span></span><br><span class="line">   outb (PIC_M_DATA, <span class="number">0x20</span>);   <span class="comment">// ICW2: 起始中断向量号为0x20,也就是IR[0-7] 为 0x20 ~ 0x27.</span></span><br><span class="line">   outb (PIC_M_DATA, <span class="number">0x04</span>);   <span class="comment">// ICW3: IR2接从片. </span></span><br><span class="line">   outb (PIC_M_DATA, <span class="number">0x01</span>);   <span class="comment">// ICW4: 8086模式, 正常EOI</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 初始化从片 */</span></span><br><span class="line">   outb (PIC_S_CTRL, <span class="number">0x11</span>);    <span class="comment">// ICW1: 边沿触发,级联8259, 需要ICW4.</span></span><br><span class="line">   outb (PIC_S_DATA, <span class="number">0x28</span>);    <span class="comment">// ICW2: 起始中断向量号为0x28,也就是IR[8-15] 为 0x28 ~ 0x2F.</span></span><br><span class="line">   outb (PIC_S_DATA, <span class="number">0x02</span>);    <span class="comment">// ICW3: 设置从片连接到主片的IR2引脚</span></span><br><span class="line">   outb (PIC_S_DATA, <span class="number">0x01</span>);    <span class="comment">// ICW4: 8086模式, 正常EOI</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 打开主片上IR0,也就是目前只接受时钟产生的中断 */</span></span><br><span class="line">   outb (PIC_M_DATA, <span class="number">0xfe</span>);</span><br><span class="line">   outb (PIC_S_DATA, <span class="number">0xff</span>);</span><br><span class="line"></span><br><span class="line">   put_str(<span class="string">"   pic_init done\n"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 创建中断门描述符 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">make_idt_desc</span><span class="params">(struct gate_desc* p_gdesc, <span class="keyword">uint8_t</span> attr, intr_handler function)</span> </span>&#123; </span><br><span class="line">   p_gdesc-&gt;func_offset_low_word = (<span class="keyword">uint32_t</span>)function &amp; <span class="number">0x0000FFFF</span>;</span><br><span class="line">   p_gdesc-&gt;selector = SELECTOR_K_CODE;</span><br><span class="line">   p_gdesc-&gt;dcount = <span class="number">0</span>;</span><br><span class="line">   p_gdesc-&gt;attribute = attr;</span><br><span class="line">   p_gdesc-&gt;func_offset_high_word = ((<span class="keyword">uint32_t</span>)function &amp; <span class="number">0xFFFF0000</span>) &gt;&gt; <span class="number">16</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*初始化中断描述符表*/</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">idt_desc_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">int</span> i;</span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; IDT_DESC_CNT; i++) &#123;</span><br><span class="line">      make_idt_desc(&amp;idt[i], IDT_DESC_ATTR_DPL0, intr_entry_table[i]); </span><br><span class="line">   &#125;</span><br><span class="line">   put_str(<span class="string">"   idt_desc_init done\n"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 通用的中断处理函数,一般用在异常出现时的处理 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">general_intr_handler</span><span class="params">(<span class="keyword">uint8_t</span> vec_nr)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">if</span> (vec_nr == <span class="number">0x27</span> || vec_nr == <span class="number">0x2f</span>) &#123;	<span class="comment">// 0x2f是从片8259A上的最后一个irq引脚，保留</span></span><br><span class="line">      <span class="keyword">return</span>;		<span class="comment">//IRQ7和IRQ15会产生伪中断(spurious interrupt),无须处理。</span></span><br><span class="line">   &#125;</span><br><span class="line">   put_str(<span class="string">"int vector: 0x"</span>);</span><br><span class="line">   put_int(vec_nr);</span><br><span class="line">   put_char(<span class="string">'\n'</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 完成一般中断处理函数注册及异常名称注册 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">exception_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;			    <span class="comment">// 完成一般中断处理函数注册及异常名称注册</span></span><br><span class="line">   <span class="keyword">int</span> i;</span><br><span class="line">   <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; IDT_DESC_CNT; i++) &#123;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* idt_table数组中的函数是在进入中断后根据中断向量号调用的,</span></span><br><span class="line"><span class="comment"> * 见kernel/kernel.S的call [idt_table + %1*4] */</span></span><br><span class="line">      idt_table[i] = general_intr_handler;		    <span class="comment">// 默认为general_intr_handler。</span></span><br><span class="line">							    <span class="comment">// 以后会由register_handler来注册具体处理函数。</span></span><br><span class="line">      intr_name[i] = <span class="string">"unknown"</span>;				    <span class="comment">// 先统一赋值为unknown </span></span><br><span class="line">   &#125;</span><br><span class="line">   intr_name[<span class="number">0</span>] = <span class="string">"#DE Divide Error"</span>;</span><br><span class="line">   intr_name[<span class="number">1</span>] = <span class="string">"#DB Debug Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">2</span>] = <span class="string">"NMI Interrupt"</span>;</span><br><span class="line">   intr_name[<span class="number">3</span>] = <span class="string">"#BP Breakpoint Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">4</span>] = <span class="string">"#OF Overflow Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">5</span>] = <span class="string">"#BR BOUND Range Exceeded Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">6</span>] = <span class="string">"#UD Invalid Opcode Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">7</span>] = <span class="string">"#NM Device Not Available Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">8</span>] = <span class="string">"#DF Double Fault Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">9</span>] = <span class="string">"Coprocessor Segment Overrun"</span>;</span><br><span class="line">   intr_name[<span class="number">10</span>] = <span class="string">"#TS Invalid TSS Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">11</span>] = <span class="string">"#NP Segment Not Present"</span>;</span><br><span class="line">   intr_name[<span class="number">12</span>] = <span class="string">"#SS Stack Fault Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">13</span>] = <span class="string">"#GP General Protection Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">14</span>] = <span class="string">"#PF Page-Fault Exception"</span>;</span><br><span class="line">   <span class="comment">// intr_name[15] 第15项是intel保留项，未使用</span></span><br><span class="line">   intr_name[<span class="number">16</span>] = <span class="string">"#MF x87 FPU Floating-Point Error"</span>;</span><br><span class="line">   intr_name[<span class="number">17</span>] = <span class="string">"#AC Alignment Check Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">18</span>] = <span class="string">"#MC Machine-Check Exception"</span>;</span><br><span class="line">   intr_name[<span class="number">19</span>] = <span class="string">"#XF SIMD Floating-Point Exception"</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*完成有关中断的所有初始化工作*/</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">idt_init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">   put_str(<span class="string">"idt_init start\n"</span>);</span><br><span class="line">   idt_desc_init();	   <span class="comment">// 初始化中断描述符表</span></span><br><span class="line">   exception_init();	   <span class="comment">// 异常名初始化并注册通常的中断处理函数</span></span><br><span class="line">   pic_init();		   <span class="comment">// 初始化8259A</span></span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 加载idt */</span></span><br><span class="line">   <span class="keyword">uint64_t</span> idt_operand = ((<span class="keyword">sizeof</span>(idt) - <span class="number">1</span>) | ((<span class="keyword">uint64_t</span>)(<span class="keyword">uint32_t</span>)idt &lt;&lt; <span class="number">16</span>));</span><br><span class="line">   <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span><span class="params">(<span class="string">"lidt %0"</span> : : <span class="string">"m"</span> (idt_operand))</span></span>;</span><br><span class="line">   put_str(<span class="string">"idt_init done\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>idt_desc_init()中对数组的每一个元素进行初始化，即对每一个描述符调用make_idt_desc()进行初始化</li>
+<li>make_idt_desc()设置描述符的选择子，便移地址，和各个属性位，最主要的就是将偏移地址指向了中断处理程序入口处，即intr_entry_table中对应的元素</li>
+<li>exception_init()定义了从0~32个中断向量号的所有中断处理函数的初始化，起始就是初始化c语言版本的中断处理函数数组idt_table，也就是抛开中断现场保护和恢复，这个中断信号触发后具体要做哪些事情，只不过本次要做的事情只是打印中断向量号，将来若实现具体的中断，比如时钟中断，或者系统调用，只需要将idt_table这个数组中对应的元素重新赋值即可，非常方便</li>
+<li>pic_init()初始化9259A，主要是设置中断向量号，级联，中断响应信号通知模式并打开时钟中断（只打开了时钟中断，其他外设中断都被屏IMR屏蔽）</li>
+<li>第123行计算48位的中断描述符表缓存寄存器的值，存入64位的idt_operand，第124行使用扩展内联汇编通过lidt指令从idt_operand中提取低48位数据到IDTR寄存器中</li>
+</ul>
+<h4 id="时钟中断演示"><a href="#时钟中断演示" class="headerlink" title="时钟中断演示"></a>时钟中断演示</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"print.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"init.h"</span></span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">   put_str(<span class="string">"I am kernel\n"</span>);</span><br><span class="line">   init_all();</span><br><span class="line">   <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span><span class="params">(<span class="string">"sti"</span>)</span></span>;	     <span class="comment">// 为演示中断处理,在此临时开中断</span></span><br><span class="line">   <span class="keyword">while</span>(<span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>这是上偏文章中我们编写的最简单的死循环内核，在init_all()中进行了中断初始化，并使用sti指令打开中断，然后便进入死循环</li>
+<li>完成中断初始化并打开中断后，操作系统就不会再像上篇文章中演示的一样进入无限循环，而且什么事情也不做，而是每次时钟中断到来，都会调用时钟中断对应的中断处理函数，当然这里只是打印时钟中断的中断向量号，毕竟本篇文章只是通过时钟中断演示中断原理，具体时钟中断要做哪些事情会再以后进行修改并重新注册</li>
+</ul>
+<p><img src="/images/IMG_0065.JPG" alt="IMG_0065.JPG"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/os/" rel="tag"># os</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/12/保护模式之内核加载/" rel="next" title="保护模式之内核加载">
+                <i class="fa fa-chevron-left"></i> 保护模式之内核加载
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/uploads/avatar.png" alt="Jiang Fan">
+            
+              <p class="site-author-name" itemprop="name">Jiang Fan</p>
+              <p class="site-description motion-element" itemprop="description">不积跬步无以至千里</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#中断相关概念"><span class="nav-number">1.</span> <span class="nav-text">中断相关概念</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#中断分类"><span class="nav-number">1.1.</span> <span class="nav-text">中断分类</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断向量"><span class="nav-number">1.2.</span> <span class="nav-text">中断向量</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断屏蔽"><span class="nav-number">1.3.</span> <span class="nav-text">中断屏蔽</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#可屏蔽中断"><span class="nav-number">1.3.1.</span> <span class="nav-text">可屏蔽中断</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#不可屏蔽中断"><span class="nav-number">1.3.2.</span> <span class="nav-text">不可屏蔽中断</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断描述符表"><span class="nav-number">1.4.</span> <span class="nav-text">中断描述符表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断门描述符"><span class="nav-number">1.5.</span> <span class="nav-text">中断门描述符</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断描述表寄存器（IDTR）"><span class="nav-number">1.6.</span> <span class="nav-text">中断描述表寄存器（IDTR）</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断处理过程及特权检查"><span class="nav-number">1.7.</span> <span class="nav-text">中断处理过程及特权检查</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断现场保护"><span class="nav-number">1.8.</span> <span class="nav-text">中断现场保护</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#特权级发生变化"><span class="nav-number">1.8.1.</span> <span class="nav-text">特权级发生变化</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#特权级不发生变化"><span class="nav-number">1.8.2.</span> <span class="nav-text">特权级不发生变化</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断现场恢复"><span class="nav-number">1.9.</span> <span class="nav-text">中断现场恢复</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#可编程中断控制器8259A"><span class="nav-number">2.</span> <span class="nav-text">可编程中断控制器8259A</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#功能"><span class="nav-number">2.1.</span> <span class="nav-text">功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#外部引脚信号线"><span class="nav-number">2.2.</span> <span class="nav-text">外部引脚信号线</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内部结构图"><span class="nav-number">2.3.</span> <span class="nav-text">内部结构图</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8259A的工作流程"><span class="nav-number">2.4.</span> <span class="nav-text">8259A的工作流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#ISR中断替换"><span class="nav-number">2.5.</span> <span class="nav-text">ISR中断替换</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#8259A编程"><span class="nav-number">2.6.</span> <span class="nav-text">8259A编程</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#中断处理程序"><span class="nav-number">3.</span> <span class="nav-text">中断处理程序</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#内核启动中断流程"><span class="nav-number">3.1.</span> <span class="nav-text">内核启动中断流程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断处理程序入口"><span class="nav-number">3.2.</span> <span class="nav-text">中断处理程序入口</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#中断初始化"><span class="nav-number">3.3.</span> <span class="nav-text">中断初始化</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#时钟中断演示"><span class="nav-number">3.4.</span> <span class="nav-text">时钟中断演示</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiang Fan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
