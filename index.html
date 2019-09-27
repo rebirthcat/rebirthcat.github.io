@@ -357,7 +357,7 @@
         
           
             <h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现</p>
-<h3 id="位图"><a href="#位图" class="headerlink" title="位图"></a>位图</h3><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><p><img src="/images/IMG_0066.JPG" alt="IMG_0066.JPG"></p>
+<h3 id="位图"><a href="#位图" class="headerlink" title="位图"></a>位图</h3><h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p><img src="/images/IMG_0066.JPG" alt="IMG_0066.JPG"></p>
 <ul>
 <li>位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图主要用来管理容量较大的资源。    </li>
 <li>本节中的管理的单位资源就是一个自然页内存，位图本身的最核心的结构是字节数组，每个字节的每一位都代表一页内存，每个二进制位都有0和1两种状态，0表示该位对应的页内存是空闲状态，而1则表示被使用状态。</li>
