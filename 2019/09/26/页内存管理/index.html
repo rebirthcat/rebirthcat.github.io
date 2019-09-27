@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head><meta name="generator" content="Hexo 3.9.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform">
+<meta http-equiv="Cache-Control" content="no-siteapp">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css">
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css">
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="os,">
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="摘要​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现 位图概念  位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图">
+<meta name="keywords" content="os">
+<meta property="og:type" content="article">
+<meta property="og:title" content="页内存管理">
+<meta property="og:url" content="http://yoursite.com/2019/09/26/页内存管理/index.html">
+<meta property="og:site_name" content="Elvis">
+<meta property="og:description" content="摘要​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现 位图概念  位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:image" content="http://yoursite.com/images/IMG_0066.JPG">
+<meta property="og:image" content="http://yoursite.com/images/IMG_0067.JPG">
+<meta property="og:image" content="http://yoursite.com/images/IMG_0068.JPG">
+<meta property="og:image" content="http://yoursite.com/images/45.png">
+<meta property="og:updated_time" content="2019-09-27T06:40:07.630Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="页内存管理">
+<meta name="twitter:description" content="摘要​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现 位图概念  位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图">
+<meta name="twitter:image" content="http://yoursite.com/images/IMG_0066.JPG">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"hide","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2019/09/26/页内存管理/">
+
+
+
+
+
+  <title>页内存管理 | Elvis</title>
+  
+
+
+
+
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Elvis</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br>
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br>
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br>
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br>
+            
+            标签
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2019/09/26/页内存管理/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Jiang Fan">
+      <meta itemprop="description" content>
+      <meta itemprop="image" content="/uploads/avatar.png">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Elvis">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">页内存管理</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2019-09-26T09:39:02+08:00">
+                2019-09-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/" itemprop="url" rel="index">
+                    <span itemprop="name">操作系统</span>
+                  </a>
+                </span>
+
+                
+                
+                  ， 
+                
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/操作系统/linux系统原理/" itemprop="url" rel="index">
+                    <span itemprop="name">linux系统原理</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h3><p>​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现</p>
+<h3 id="位图"><a href="#位图" class="headerlink" title="位图"></a>位图</h3><h4 id="概念"><a href="#概念" class="headerlink" title="概念"></a>概念</h4><p><img src="/images/IMG_0066.JPG" alt="IMG_0066.JPG"></p>
+<ul>
+<li>位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图主要用来管理容量较大的资源。    </li>
+<li>本节中的管理的单位资源就是一个自然页内存，位图本身的最核心的结构是字节数组，每个字节的每一位都代表一页内存，每个二进制位都有0和1两种状态，0表示该位对应的页内存是空闲状态，而1则表示被使用状态。</li>
+</ul>
+<h4 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h4><p>bitmap的结构定义和函数声明</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> __LIB_KERNEL_BITMAP_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> __LIB_KERNEL_BITMAP_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"global.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BITMAP_MASK 1</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">bitmap</span> &#123;</span></span><br><span class="line">   <span class="keyword">uint32_t</span> btmp_bytes_len;</span><br><span class="line"><span class="comment">/* 在遍历位图时,整体上以字节为单位,细节上是以位为单位,所以此处位图的指针必须是单字节 */</span></span><br><span class="line">   <span class="keyword">uint8_t</span>* bits;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bitmap_init</span><span class="params">(struct bitmap* btmp)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">bitmap_scan_test</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> bit_idx)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">bitmap_scan</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> cnt)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bitmap_set</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> bit_idx, <span class="keyword">int8_t</span> value)</span></span>;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>bitmap操作函数实现</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"bitmap.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdint.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"string.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"print.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"interrupt.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"debug.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 将位图btmp初始化 */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bitmap_init</span><span class="params">(struct bitmap* btmp)</span> </span>&#123;</span><br><span class="line">   <span class="built_in">memset</span>(btmp-&gt;bits, <span class="number">0</span>, btmp-&gt;btmp_bytes_len);   </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 判断bit_idx位是否为1,若为1则返回true，否则返回false */</span></span><br><span class="line"><span class="function"><span class="keyword">bool</span> <span class="title">bitmap_scan_test</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> bit_idx)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">uint32_t</span> byte_idx = bit_idx / <span class="number">8</span>;    <span class="comment">// 向下取整用于索引数组下标</span></span><br><span class="line">   <span class="keyword">uint32_t</span> bit_odd  = bit_idx % <span class="number">8</span>;    <span class="comment">// 取余用于索引数组内的位</span></span><br><span class="line">   <span class="keyword">return</span> (btmp-&gt;bits[byte_idx] &amp; (BITMAP_MASK &lt;&lt; bit_odd));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 在位图中申请连续cnt个位,成功则返回其起始位下标，失败返回-1 */</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">bitmap_scan</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> cnt)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">uint32_t</span> idx_byte = <span class="number">0</span>;	 <span class="comment">// 用于记录空闲位所在的字节</span></span><br><span class="line"><span class="comment">/* 先逐字节比较,蛮力法 */</span></span><br><span class="line">   <span class="keyword">while</span> (( <span class="number">0xff</span> == btmp-&gt;bits[idx_byte]) &amp;&amp; (idx_byte &lt; btmp-&gt;btmp_bytes_len)) &#123;</span><br><span class="line"><span class="comment">/* 1表示该位已分配,所以若为0xff,则表示该字节内已无空闲位,向下一字节继续找 */</span></span><br><span class="line">      idx_byte++;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   ASSERT(idx_byte &lt; btmp-&gt;btmp_bytes_len);</span><br><span class="line">   <span class="keyword">if</span> (idx_byte == btmp-&gt;btmp_bytes_len) &#123;  <span class="comment">// 若该内存池找不到可用空间		</span></span><br><span class="line">      <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line"> <span class="comment">/* 若在位图数组范围内的某字节内找到了空闲位，</span></span><br><span class="line"><span class="comment">  * 在该字节内逐位比对,返回空闲位的索引。*/</span></span><br><span class="line">   <span class="keyword">int</span> idx_bit = <span class="number">0</span>;</span><br><span class="line"> <span class="comment">/* 和btmp-&gt;bits[idx_byte]这个字节逐位对比 */</span></span><br><span class="line">   <span class="keyword">while</span> ((<span class="keyword">uint8_t</span>)(BITMAP_MASK &lt;&lt; idx_bit) &amp; btmp-&gt;bits[idx_byte]) &#123; </span><br><span class="line">	 idx_bit++;</span><br><span class="line">   &#125;</span><br><span class="line">	 </span><br><span class="line">   <span class="keyword">int</span> bit_idx_start = idx_byte * <span class="number">8</span> + idx_bit;    <span class="comment">// 空闲位在位图内的下标</span></span><br><span class="line">   <span class="keyword">if</span> (cnt == <span class="number">1</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> bit_idx_start;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">uint32_t</span> bit_left = (btmp-&gt;btmp_bytes_len * <span class="number">8</span> - bit_idx_start);   <span class="comment">// 记录还有多少位可以判断</span></span><br><span class="line">   <span class="keyword">uint32_t</span> next_bit = bit_idx_start + <span class="number">1</span>;</span><br><span class="line">   <span class="keyword">uint32_t</span> count = <span class="number">1</span>;	      <span class="comment">// 用于记录找到的空闲位的个数</span></span><br><span class="line"></span><br><span class="line">   bit_idx_start = <span class="number">-1</span>;	      <span class="comment">// 先将其置为-1,若找不到连续的位就直接返回</span></span><br><span class="line">   <span class="keyword">while</span> (bit_left-- &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (!(bitmap_scan_test(btmp, next_bit))) &#123;	 <span class="comment">// 若next_bit为0</span></span><br><span class="line">	 count++;</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">	 count = <span class="number">0</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">if</span> (count == cnt) &#123;	    <span class="comment">// 若找到连续的cnt个空位</span></span><br><span class="line">	 bit_idx_start = next_bit - cnt + <span class="number">1</span>;</span><br><span class="line">	 <span class="keyword">break</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      next_bit++;          </span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> bit_idx_start;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 将位图btmp的bit_idx位设置为value */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">bitmap_set</span><span class="params">(struct bitmap* btmp, <span class="keyword">uint32_t</span> bit_idx, <span class="keyword">int8_t</span> value)</span> </span>&#123;</span><br><span class="line">   ASSERT((value == <span class="number">0</span>) || (value == <span class="number">1</span>));</span><br><span class="line">   <span class="keyword">uint32_t</span> byte_idx = bit_idx / <span class="number">8</span>;    <span class="comment">// 向下取整用于索引数组下标</span></span><br><span class="line">   <span class="keyword">uint32_t</span> bit_odd  = bit_idx % <span class="number">8</span>;    <span class="comment">// 取余用于索引数组内的位</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 一般都会用个0x1这样的数对字节中的位操作,</span></span><br><span class="line"><span class="comment"> * 将1任意移动后再取反,或者先取反再移位,可用来对位置0操作。*/</span></span><br><span class="line">   <span class="keyword">if</span> (value) &#123;		      <span class="comment">// 如果value为1</span></span><br><span class="line">      btmp-&gt;bits[byte_idx] |= (BITMAP_MASK &lt;&lt; bit_odd);</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;		      <span class="comment">// 若为0</span></span><br><span class="line">      btmp-&gt;bits[byte_idx] &amp;= ~(BITMAP_MASK &lt;&lt; bit_odd);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="内存池"><a href="#内存池" class="headerlink" title="内存池"></a>内存池</h3><p>​    内核和用户进程分别运行在自己的地址空间，在保护模式的分页机制下，有虚拟、物理两种地址，操作系统有责任把这两种地址分别管理</p>
+<h4 id="物理内存地址池"><a href="#物理内存地址池" class="headerlink" title="物理内存地址池"></a>物理内存地址池</h4><ul>
+<li>物理内存池分成两部分，一部分只用来运行内核，称为内核物理内存池，另一部分只用来分配给用户进程，称作用户物理内存池</li>
+<li>用户物理内存池和内核物理内存池各站一半</li>
+<li>当用户内存池中的内存都被用户进程耗尽时，不能向内核内存池申请，而是直接返回“内存不足”，拒绝请求</li>
+</ul>
+<h4 id="虚拟内存地址池"><a href="#虚拟内存地址池" class="headerlink" title="虚拟内存地址池"></a>虚拟内存地址池</h4><ul>
+<li>用户进程或者内核线程在运行时，都有申请内存的需求，操作系统接受请求后，在分页机制下，为用户进程或者内核在堆中选择一个空闲的虚拟地址，并找个空闲的物理地址作为虚拟地址映射，之后把这个虚拟地址返回给用户进程或者内核</li>
+<li>对于所有的任务（用户进程或者内核）来说，他们都有各自的虚拟地址空间，因此需要为所有任务维护他们自己的虚拟地址池</li>
+<li>内核申请内存时，从内核字节的虚拟地址池中分配虚拟地址，在从内核物理内存池(内核专用)中分配物理内存，然后在内核自己的页表将这两种地址建立好映射关系</li>
+<li>用户进程向操作系统申请内存时，操作系统先从用户进程自己的虚拟地址池中分配空闲虚拟地址，然后再从用户物理内存池（所有用户进程贡献）中分配空闲的物理内存，然后在该用户进程自己的页表中将这两种地址建立好映射关系</li>
+<li>为方便实现和管理，虚拟地址池中的资源单位也是4KB，这样虚拟地址便和物理地址有了完整页的映射，有了虚拟地址池和物理地址池后，他们的关系下图</li>
+</ul>
+<p><img src="/images/IMG_0067.JPG" alt="IMG_0067.JPG"></p>
+<h4 id="代码实现"><a href="#代码实现" class="headerlink" title="代码实现"></a>代码实现</h4><p>memory.h：定义内核池标记、页表项和目录项的属性位、虚拟地址池并声明初始化内存池、按页申请内存函数</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> __KERNEL_MEMORY_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> __KERNEL_MEMORY_H</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdint.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"bitmap.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 内存池标记,用于判断用哪个内存池 */</span></span><br><span class="line"><span class="keyword">enum</span> pool_flags &#123;</span><br><span class="line">   PF_KERNEL = <span class="number">1</span>,    <span class="comment">// 内核内存池</span></span><br><span class="line">   PF_USER = <span class="number">2</span>	     <span class="comment">// 用户内存池</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_P_1	  1	<span class="comment">// 页表项或页目录项存在属性位</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_P_0	  0	<span class="comment">// 页表项或页目录项存在属性位</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_RW_R  0	<span class="comment">// R/W 属性位值, 读/执行</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_RW_W  2	<span class="comment">// R/W 属性位值, 读/写/执行</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_US_S  0	<span class="comment">// U/S 属性位值, 系统级</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span>	 PG_US_U  4	<span class="comment">// U/S 属性位值, 用户级</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 用于虚拟地址管理 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">virtual_addr</span> &#123;</span></span><br><span class="line"><span class="comment">/* 虚拟地址用到的位图结构，用于记录哪些虚拟地址被占用了。以页为单位。*/</span></span><br><span class="line">   <span class="class"><span class="keyword">struct</span> <span class="title">bitmap</span> <span class="title">vaddr_bitmap</span>;</span></span><br><span class="line"><span class="comment">/* 管理的虚拟地址 */</span></span><br><span class="line">   <span class="keyword">uint32_t</span> vaddr_start;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="class"><span class="keyword">struct</span> <span class="title">pool</span> <span class="title">kernel_pool</span>, <span class="title">user_pool</span>;</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mem_init</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">get_kernel_pages</span><span class="params">(<span class="keyword">uint32_t</span> pg_cnt)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">malloc_page</span><span class="params">(<span class="keyword">enum</span> pool_flags pf, <span class="keyword">uint32_t</span> pg_cnt)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">malloc_init</span><span class="params">(<span class="keyword">void</span>)</span></span>;</span><br><span class="line"><span class="keyword">uint32_t</span>* pte_ptr(<span class="keyword">uint32_t</span> vaddr);</span><br><span class="line"><span class="keyword">uint32_t</span>* pde_ptr(<span class="keyword">uint32_t</span> vaddr);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p>memory.c：定义用户和内核物理内存池，完成初始化、按页分配内存的实现</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"memory.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"bitmap.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"stdint.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"global.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"debug.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"print.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"string.h"</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PG_SIZE 4096</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/***************  位图地址 ********************</span></span><br><span class="line"><span class="comment"> * 因为0xc009f000是内核主线程栈顶，0xc009e000是内核主线程的pcb.</span></span><br><span class="line"><span class="comment"> * 一个页框大小的位图可表示128M内存, 位图位置安排在地址0xc009a000,</span></span><br><span class="line"><span class="comment"> * 这样本系统最大支持4个页框的位图,即512M */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> MEM_BITMAP_BASE 0xc009a000</span></span><br><span class="line"><span class="comment">/*************************************/</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PDE_IDX(addr) ((addr &amp; 0xffc00000) &gt;&gt; 22)</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> PTE_IDX(addr) ((addr &amp; 0x003ff000) &gt;&gt; 12)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 0xc0000000是内核从虚拟地址3G起. 0x100000意指跨过低端1M内存,使虚拟地址在逻辑上连续 */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> K_HEAP_START 0xc0100000</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 内存池结构,生成两个实例用于管理内核内存池和用户内存池 */</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pool</span> &#123;</span></span><br><span class="line">   <span class="class"><span class="keyword">struct</span> <span class="title">bitmap</span> <span class="title">pool_bitmap</span>;</span>	 <span class="comment">// 本内存池用到的位图结构,用于管理物理内存</span></span><br><span class="line">   <span class="keyword">uint32_t</span> phy_addr_start;	 <span class="comment">// 本内存池所管理物理内存的起始地址</span></span><br><span class="line">   <span class="keyword">uint32_t</span> pool_size;		 <span class="comment">// 本内存池字节容量</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pool</span> <span class="title">kernel_pool</span>, <span class="title">user_pool</span>;</span>      <span class="comment">// 生成内核内存池和用户内存池</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">virtual_addr</span> <span class="title">kernel_vaddr</span>;</span>	 <span class="comment">// 此结构是用来给内核分配虚拟地址</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/* 在pf表示的虚拟内存池中申请pg_cnt个虚拟页,</span></span><br><span class="line"><span class="comment"> * 成功则返回虚拟页的起始地址, 失败则返回NULL */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">vaddr_get</span><span class="params">(<span class="keyword">enum</span> pool_flags pf, <span class="keyword">uint32_t</span> pg_cnt)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">int</span> vaddr_start = <span class="number">0</span>, bit_idx_start = <span class="number">-1</span>;</span><br><span class="line">   <span class="keyword">uint32_t</span> cnt = <span class="number">0</span>;</span><br><span class="line">   <span class="keyword">if</span> (pf == PF_KERNEL) &#123;</span><br><span class="line">      bit_idx_start  = bitmap_scan(&amp;kernel_vaddr.vaddr_bitmap, pg_cnt);</span><br><span class="line">      <span class="keyword">if</span> (bit_idx_start == <span class="number">-1</span>) &#123;</span><br><span class="line">	 <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">while</span>(cnt &lt; pg_cnt) &#123;</span><br><span class="line">	 bitmap_set(&amp;kernel_vaddr.vaddr_bitmap, bit_idx_start + cnt++, <span class="number">1</span>);</span><br><span class="line">      &#125;</span><br><span class="line">      vaddr_start = kernel_vaddr.vaddr_start + bit_idx_start * PG_SIZE;</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;	</span><br><span class="line">   <span class="comment">// 用户内存池,将来实现用户进程再补充</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> (<span class="keyword">void</span>*)vaddr_start;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 得到虚拟地址vaddr对应的pte指针*/</span></span><br><span class="line"><span class="keyword">uint32_t</span>* pte_ptr(<span class="keyword">uint32_t</span> vaddr) &#123;</span><br><span class="line">   <span class="comment">/* 先访问到页表自己 + \</span></span><br><span class="line"><span class="comment">    * 再用页目录项pde(页目录内页表的索引)做为pte的索引访问到页表 + \</span></span><br><span class="line"><span class="comment">    * 再用pte的索引做为页内偏移*/</span></span><br><span class="line">   <span class="keyword">uint32_t</span>* pte = (<span class="keyword">uint32_t</span>*)(<span class="number">0xffc00000</span> + \</span><br><span class="line">	 ((vaddr &amp; <span class="number">0xffc00000</span>) &gt;&gt; <span class="number">10</span>) + \</span><br><span class="line">	 PTE_IDX(vaddr) * <span class="number">4</span>);</span><br><span class="line">   <span class="keyword">return</span> pte;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 得到虚拟地址vaddr对应的pde的指针 */</span></span><br><span class="line"><span class="keyword">uint32_t</span>* pde_ptr(<span class="keyword">uint32_t</span> vaddr) &#123;</span><br><span class="line">   <span class="comment">/* 0xfffff是用来访问到页表本身所在的地址 */</span></span><br><span class="line">   <span class="keyword">uint32_t</span>* pde = (<span class="keyword">uint32_t</span>*)((<span class="number">0xfffff000</span>) + PDE_IDX(vaddr) * <span class="number">4</span>);</span><br><span class="line">   <span class="keyword">return</span> pde;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 在m_pool指向的物理内存池中分配1个物理页,</span></span><br><span class="line"><span class="comment"> * 成功则返回页框的物理地址,失败则返回NULL */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span>* <span class="title">palloc</span><span class="params">(struct pool* m_pool)</span> </span>&#123;</span><br><span class="line">   <span class="comment">/* 扫描或设置位图要保证原子操作 */</span></span><br><span class="line">   <span class="keyword">int</span> bit_idx = bitmap_scan(&amp;m_pool-&gt;pool_bitmap, <span class="number">1</span>);    <span class="comment">// 找一个物理页面</span></span><br><span class="line">   <span class="keyword">if</span> (bit_idx == <span class="number">-1</span> ) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">   &#125;</span><br><span class="line">   bitmap_set(&amp;m_pool-&gt;pool_bitmap, bit_idx, <span class="number">1</span>);	<span class="comment">// 将此位bit_idx置1</span></span><br><span class="line">   <span class="keyword">uint32_t</span> page_phyaddr = ((bit_idx * PG_SIZE) + m_pool-&gt;phy_addr_start);</span><br><span class="line">   <span class="keyword">return</span> (<span class="keyword">void</span>*)page_phyaddr;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/* 页表中添加虚拟地址_vaddr与物理地址_page_phyaddr的映射 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">page_table_add</span><span class="params">(<span class="keyword">void</span>* _vaddr, <span class="keyword">void</span>* _page_phyaddr)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">uint32_t</span> vaddr = (<span class="keyword">uint32_t</span>)_vaddr, page_phyaddr = (<span class="keyword">uint32_t</span>)_page_phyaddr;</span><br><span class="line">   <span class="keyword">uint32_t</span>* pde = pde_ptr(vaddr);</span><br><span class="line">   <span class="keyword">uint32_t</span>* pte = pte_ptr(vaddr);</span><br><span class="line"></span><br><span class="line"><span class="comment">/************************   注意   *************************</span></span><br><span class="line"><span class="comment"> * 执行*pte,会访问到空的pde。所以确保pde创建完成后才能执行*pte,</span></span><br><span class="line"><span class="comment"> * 否则会引发page_fault。因此在*pde为0时,*pte只能出现在下面else语句块中的*pde后面。</span></span><br><span class="line"><span class="comment"> * *********************************************************/</span></span><br><span class="line">   <span class="comment">/* 先在页目录内判断目录项的P位，若为1,则表示该表已存在 */</span></span><br><span class="line">   <span class="keyword">if</span> (*pde &amp; <span class="number">0x00000001</span>) &#123;	 <span class="comment">// 页目录项和页表项的第0位为P,此处判断目录项是否存在</span></span><br><span class="line">      ASSERT(!(*pte &amp; <span class="number">0x00000001</span>));</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (!(*pte &amp; <span class="number">0x00000001</span>)) &#123;   <span class="comment">// 只要是创建页表,pte就应该不存在,多判断一下放心</span></span><br><span class="line">	 *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);    <span class="comment">// US=1,RW=1,P=1</span></span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;			    <span class="comment">//应该不会执行到这，因为上面的ASSERT会先执行。</span></span><br><span class="line">	 PANIC(<span class="string">"pte repeat"</span>);</span><br><span class="line">	 *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);      <span class="comment">// US=1,RW=1,P=1</span></span><br><span class="line">      &#125;</span><br><span class="line">   &#125; <span class="keyword">else</span> &#123;			    <span class="comment">// 页目录项不存在,所以要先创建页目录再创建页表项.</span></span><br><span class="line">      <span class="comment">/* 页表中用到的页框一律从内核空间分配 */</span></span><br><span class="line">      <span class="keyword">uint32_t</span> pde_phyaddr = (<span class="keyword">uint32_t</span>)palloc(&amp;kernel_pool);</span><br><span class="line"></span><br><span class="line">      *pde = (pde_phyaddr | PG_US_U | PG_RW_W | PG_P_1);</span><br><span class="line"></span><br><span class="line">      <span class="comment">/* 分配到的物理页地址pde_phyaddr对应的物理内存清0,</span></span><br><span class="line"><span class="comment">       * 避免里面的陈旧数据变成了页表项,从而让页表混乱.</span></span><br><span class="line"><span class="comment">       * 访问到pde对应的物理地址,用pte取高20位便可.</span></span><br><span class="line"><span class="comment">       * 因为pte是基于该pde对应的物理地址内再寻址,</span></span><br><span class="line"><span class="comment">       * 把低12位置0便是该pde对应的物理页的起始*/</span></span><br><span class="line">      <span class="built_in">memset</span>((<span class="keyword">void</span>*)((<span class="keyword">int</span>)pte &amp; <span class="number">0xfffff000</span>), <span class="number">0</span>, PG_SIZE);</span><br><span class="line">         </span><br><span class="line">      ASSERT(!(*pte &amp; <span class="number">0x00000001</span>));</span><br><span class="line">      *pte = (page_phyaddr | PG_US_U | PG_RW_W | PG_P_1);      <span class="comment">// US=1,RW=1,P=1</span></span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 分配pg_cnt个页空间,成功则返回起始虚拟地址,失败时返回NULL */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">malloc_page</span><span class="params">(<span class="keyword">enum</span> pool_flags pf, <span class="keyword">uint32_t</span> pg_cnt)</span> </span>&#123;</span><br><span class="line">   ASSERT(pg_cnt &gt; <span class="number">0</span> &amp;&amp; pg_cnt &lt; <span class="number">3840</span>);</span><br><span class="line"><span class="comment">/***********   malloc_page的原理是三个动作的合成:   ***********</span></span><br><span class="line"><span class="comment">      1通过vaddr_get在虚拟内存池中申请虚拟地址</span></span><br><span class="line"><span class="comment">      2通过palloc在物理内存池中申请物理页</span></span><br><span class="line"><span class="comment">      3通过page_table_add将以上得到的虚拟地址和物理地址在页表中完成映射</span></span><br><span class="line"><span class="comment">*************************xiaog**************************************/</span></span><br><span class="line">   <span class="keyword">void</span>* vaddr_start = vaddr_get(pf, pg_cnt);</span><br><span class="line">   <span class="keyword">if</span> (vaddr_start == <span class="literal">NULL</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">   &#125;</span><br><span class="line"></span><br><span class="line">   <span class="keyword">uint32_t</span> vaddr = (<span class="keyword">uint32_t</span>)vaddr_start, cnt = pg_cnt;</span><br><span class="line">   <span class="class"><span class="keyword">struct</span> <span class="title">pool</span>* <span class="title">mem_pool</span> = <span class="title">pf</span> &amp; <span class="title">PF_KERNEL</span> ? &amp;<span class="title">kernel_pool</span> :</span> &amp;user_pool;</span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 因为虚拟地址是连续的,但物理地址可以是不连续的,所以逐个做映射*/</span></span><br><span class="line">   <span class="keyword">while</span> (cnt-- &gt; <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="keyword">void</span>* page_phyaddr = palloc(mem_pool);</span><br><span class="line">      <span class="keyword">if</span> (page_phyaddr == <span class="literal">NULL</span>) &#123;  <span class="comment">// 失败时要将曾经已申请的虚拟地址和物理页全部回滚，在将来完成内存回收时再补充</span></span><br><span class="line">	 <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      page_table_add((<span class="keyword">void</span>*)vaddr, page_phyaddr); <span class="comment">// 在页表中做映射 </span></span><br><span class="line">      vaddr += PG_SIZE;		 <span class="comment">// 下一个虚拟页</span></span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> vaddr_start;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 从内核物理内存池中申请pg_cnt页内存,成功则返回其虚拟地址,失败则返回NULL */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span>* <span class="title">get_kernel_pages</span><span class="params">(<span class="keyword">uint32_t</span> pg_cnt)</span> </span>&#123;</span><br><span class="line">   <span class="keyword">void</span>* vaddr =  malloc_page(PF_KERNEL, pg_cnt);</span><br><span class="line">   <span class="keyword">if</span> (vaddr != <span class="literal">NULL</span>) &#123;	   <span class="comment">// 若分配的地址不为空,将页框清0后返回</span></span><br><span class="line">      <span class="built_in">memset</span>(vaddr, <span class="number">0</span>, pg_cnt * PG_SIZE);</span><br><span class="line">   &#125;</span><br><span class="line">   <span class="keyword">return</span> vaddr;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 初始化内存池 */</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">mem_pool_init</span><span class="params">(<span class="keyword">uint32_t</span> all_mem)</span> </span>&#123;</span><br><span class="line">   put_str(<span class="string">"   mem_pool_init start\n"</span>);</span><br><span class="line">   <span class="keyword">uint32_t</span> page_table_size = PG_SIZE * <span class="number">256</span>;	  <span class="comment">// 页表大小= 1页的页目录表+第0和第768个页目录项指向同一个页表+</span></span><br><span class="line">                                                  <span class="comment">// 第769~1022个页目录项共指向254个页表,共256个页框</span></span><br><span class="line">   <span class="keyword">uint32_t</span> used_mem = page_table_size + <span class="number">0x100000</span>;	  <span class="comment">// 0x100000为低端1M内存</span></span><br><span class="line">   <span class="keyword">uint32_t</span> free_mem = all_mem - used_mem;</span><br><span class="line">   <span class="keyword">uint16_t</span> all_free_pages = free_mem / PG_SIZE;		  <span class="comment">// 1页为4k,不管总内存是不是4k的倍数,</span></span><br><span class="line">								  <span class="comment">// 对于以页为单位的内存分配策略，不足1页的内存不用考虑了。</span></span><br><span class="line">   <span class="keyword">uint16_t</span> kernel_free_pages = all_free_pages / <span class="number">2</span>;</span><br><span class="line">   <span class="keyword">uint16_t</span> user_free_pages = all_free_pages - kernel_free_pages;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 为简化位图操作，余数不处理，坏处是这样做会丢内存。</span></span><br><span class="line"><span class="comment">好处是不用做内存的越界检查,因为位图表示的内存少于实际物理内存*/</span></span><br><span class="line">   <span class="keyword">uint32_t</span> kbm_length = kernel_free_pages / <span class="number">8</span>;			  <span class="comment">// Kernel BitMap的长度,位图中的一位表示一页,以字节为单位</span></span><br><span class="line">   <span class="keyword">uint32_t</span> ubm_length = user_free_pages / <span class="number">8</span>;			  <span class="comment">// User BitMap的长度.</span></span><br><span class="line"></span><br><span class="line">   <span class="keyword">uint32_t</span> kp_start = used_mem;				  <span class="comment">// Kernel Pool start,内核内存池的起始地址</span></span><br><span class="line">   <span class="keyword">uint32_t</span> up_start = kp_start + kernel_free_pages * PG_SIZE;	  <span class="comment">// User Pool start,用户内存池的起始地址</span></span><br><span class="line"></span><br><span class="line">   kernel_pool.phy_addr_start = kp_start;</span><br><span class="line">   user_pool.phy_addr_start   = up_start;</span><br><span class="line"></span><br><span class="line">   kernel_pool.pool_size = kernel_free_pages * PG_SIZE;</span><br><span class="line">   user_pool.pool_size	 = user_free_pages * PG_SIZE;</span><br><span class="line"></span><br><span class="line">   kernel_pool.pool_bitmap.btmp_bytes_len = kbm_length;</span><br><span class="line">   user_pool.pool_bitmap.btmp_bytes_len	  = ubm_length;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*********    内核内存池和用户内存池位图   ***********</span></span><br><span class="line"><span class="comment"> *   位图是全局的数据，长度不固定。</span></span><br><span class="line"><span class="comment"> *   全局或静态的数组需要在编译时知道其长度，</span></span><br><span class="line"><span class="comment"> *   而我们需要根据总内存大小算出需要多少字节。</span></span><br><span class="line"><span class="comment"> *   所以改为指定一块内存来生成位图.</span></span><br><span class="line"><span class="comment"> *   ************************************************/</span></span><br><span class="line"><span class="comment">// 内核使用的最高地址是0xc009f000,这是主线程的栈地址.(内核的大小预计为70K左右)</span></span><br><span class="line"><span class="comment">// 32M内存占用的位图是2k.内核内存池的位图先定在MEM_BITMAP_BASE(0xc009a000)处.</span></span><br><span class="line">   kernel_pool.pool_bitmap.bits = (<span class="keyword">void</span>*)MEM_BITMAP_BASE;</span><br><span class="line">							       </span><br><span class="line"><span class="comment">/* 用户内存池的位图紧跟在内核内存池位图之后 */</span></span><br><span class="line">   user_pool.pool_bitmap.bits = (<span class="keyword">void</span>*)(MEM_BITMAP_BASE + kbm_length);</span><br><span class="line">   <span class="comment">/******************** 输出内存池信息 **********************/</span></span><br><span class="line">   put_str(<span class="string">"      kernel_pool_bitmap_start:"</span>);put_int((<span class="keyword">int</span>)kernel_pool.pool_bitmap.bits);</span><br><span class="line">   put_str(<span class="string">" kernel_pool_phy_addr_start:"</span>);put_int(kernel_pool.phy_addr_start);</span><br><span class="line">   put_str(<span class="string">"\n"</span>);</span><br><span class="line">   put_str(<span class="string">"      user_pool_bitmap_start:"</span>);put_int((<span class="keyword">int</span>)user_pool.pool_bitmap.bits);</span><br><span class="line">   put_str(<span class="string">" user_pool_phy_addr_start:"</span>);put_int(user_pool.phy_addr_start);</span><br><span class="line">   put_str(<span class="string">"\n"</span>);</span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 将位图置0*/</span></span><br><span class="line">   bitmap_init(&amp;kernel_pool.pool_bitmap);</span><br><span class="line">   bitmap_init(&amp;user_pool.pool_bitmap);</span><br><span class="line"></span><br><span class="line">   <span class="comment">/* 下面初始化内核虚拟地址的位图,按实际物理内存大小生成数组。*/</span></span><br><span class="line">   kernel_vaddr.vaddr_bitmap.btmp_bytes_len = kbm_length;      <span class="comment">// 用于维护内核堆的虚拟地址,所以要和内核内存池大小一致</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">/* 位图的数组指向一块未使用的内存,目前定位在内核内存池和用户内存池之外*/</span></span><br><span class="line">   kernel_vaddr.vaddr_bitmap.bits = (<span class="keyword">void</span>*)(MEM_BITMAP_BASE + kbm_length + ubm_length);</span><br><span class="line"></span><br><span class="line">   kernel_vaddr.vaddr_start = K_HEAP_START;</span><br><span class="line">   bitmap_init(&amp;kernel_vaddr.vaddr_bitmap);</span><br><span class="line">   put_str(<span class="string">"   mem_pool_init done\n"</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/* 内存管理部分初始化入口 */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">mem_init</span><span class="params">()</span> </span>&#123;</span><br><span class="line">   put_str(<span class="string">"mem_init start\n"</span>);</span><br><span class="line">   <span class="keyword">uint32_t</span> mem_bytes_total = (*(<span class="keyword">uint32_t</span>*)(<span class="number">0xb00</span>));</span><br><span class="line">   mem_pool_init(mem_bytes_total);	  <span class="comment">// 初始化内存池</span></span><br><span class="line">   put_str(<span class="string">"mem_init done\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>main.c: init_all()中加入初始化内存池，然后向调用get_kernel_pages(3)向内核物理内存池申请3页大小的内存，并返回在内核虚拟内存池中的虚拟地址并打印</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"print.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"init.h"</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">"memory.h"</span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">   put_str(<span class="string">"I am kernel\n"</span>);</span><br><span class="line">   init_all();</span><br><span class="line"></span><br><span class="line">   <span class="keyword">void</span>* addr = get_kernel_pages(<span class="number">3</span>);</span><br><span class="line">   put_str(<span class="string">"\n get_kernel_page start vaddr is "</span>);</span><br><span class="line">   put_int((<span class="keyword">uint32_t</span>)addr);</span><br><span class="line">   put_str(<span class="string">"\n"</span>);</span><br><span class="line"></span><br><span class="line">   <span class="keyword">while</span>(<span class="number">1</span>);</span><br><span class="line">   <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="运行调试"><a href="#运行调试" class="headerlink" title="运行调试"></a>运行调试</h4><p><img src="/images/IMG_0068.JPG" alt="IMG_0068.JPG"></p>
+<ul>
+<li>位图本身存在于低端1MB的0x0009a000处，距离内核PCB处有16kb的大小，即位图长度为16KB的字节数组，可以管理内存最大范围是512M，对于本系统来说是够用了</li>
+<li>位图所管理的资源只能是“未被征用”的内存，而那些已经被提取征用的内存资源并不在位图的管理范围内，已经被“提取征用的资源”包括低端1MB内存，页目录表和255张内核页表（1MB），所以位图管理的内核物理地址最小是0x00200000</li>
+<li>内核虚拟内存池的起始地址K_HEAP_START=0xc0100000，因为0xc000000~0xc0100000这1MB已经在初始化页表时映射到了物理地址低端1MB上，这1MB的虚拟地址已经被占用，内核后续的运行如果需要申请虚拟地址只能从0xc010000开始</li>
+<li>通过以上分析可以得知，内核虚拟地址池的起始地址是0xc0100000，内核物理地址池的起始地址是0x00200000，所以如果内核第一次开始申请内存时，将返回0xc010000，而且会在内核页表中建立虚拟地址0xc010000到物理地址0x00200000的映射关系</li>
+</ul>
+<h4 id="内存布局"><a href="#内存布局" class="headerlink" title="内存布局"></a>内存布局</h4><p>​    完成本节后，系统的整体内存布局入下图</p>
+<p><img src="/images/45.png" alt="45.png"></p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/os/" rel="tag"># os</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/09/16/中断/" rel="next" title="中断">
+                <i class="fa fa-chevron-left"></i> 中断
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/uploads/avatar.png" alt="Jiang Fan">
+            
+              <p class="site-author-name" itemprop="name">Jiang Fan</p>
+              <p class="site-description motion-element" itemprop="description">不积跬步无以至千里</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">13</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">3</span>
+                  <span class="site-state-item-name">标签</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#摘要"><span class="nav-number">1.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#位图"><span class="nav-number">2.</span> <span class="nav-text">位图</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#概念"><span class="nav-number">2.1.</span> <span class="nav-text">概念</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#实现"><span class="nav-number">2.2.</span> <span class="nav-text">实现</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#内存池"><span class="nav-number">3.</span> <span class="nav-text">内存池</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#物理内存地址池"><span class="nav-number">3.1.</span> <span class="nav-text">物理内存地址池</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#虚拟内存地址池"><span class="nav-number">3.2.</span> <span class="nav-text">虚拟内存地址池</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#代码实现"><span class="nav-number">3.3.</span> <span class="nav-text">代码实现</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#运行调试"><span class="nav-number">3.4.</span> <span class="nav-text">运行调试</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#内存布局"><span class="nav-number">3.5.</span> <span class="nav-text">内存布局</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2019</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Jiang Fan</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Mist</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
