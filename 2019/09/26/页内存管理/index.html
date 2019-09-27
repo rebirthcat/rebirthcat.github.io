@@ -90,8 +90,9 @@
 <meta property="og:image" content="http://yoursite.com/images/IMG_0066.JPG">
 <meta property="og:image" content="http://yoursite.com/images/IMG_0067.JPG">
 <meta property="og:image" content="http://yoursite.com/images/IMG_0068.JPG">
+<meta property="og:image" content="http://yoursite.com/images/IMG_0069.JPG">
 <meta property="og:image" content="http://yoursite.com/images/45.png">
-<meta property="og:updated_time" content="2019-09-27T06:40:07.630Z">
+<meta property="og:updated_time" content="2019-09-27T06:45:50.433Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="页内存管理">
 <meta name="twitter:description" content="摘要​    本节内容介绍linux 内存管理系统的基本原理，介绍位图，物理内存池，虚拟内存池的概念以及实现，最后实现malloc_page这样一个按页分配内存的内核函数；本节的局限性：只能按页为单位进行内存的分配，只实现内核线程的页分配内存，细粒度的内存分配以及用户进程的内存分配会在后面的章节中给出实现 位图概念  位图相当于一组资源的映射。位图的每一位和被管理的单位资源都是一一对应的关系，位图">
@@ -398,8 +399,9 @@
 <li>位图本身存在于低端1MB的0x0009a000处，距离内核PCB处有16kb的大小，即位图长度为16KB的字节数组，可以管理内存最大范围是512M，对于本系统来说是够用了</li>
 <li>位图所管理的资源只能是“未被征用”的内存，而那些已经被提取征用的内存资源并不在位图的管理范围内，已经被“提取征用的资源”包括低端1MB内存，页目录表和255张内核页表（1MB），所以位图管理的内核物理地址最小是0x00200000</li>
 <li>内核虚拟内存池的起始地址K_HEAP_START=0xc0100000，因为0xc000000~0xc0100000这1MB已经在初始化页表时映射到了物理地址低端1MB上，这1MB的虚拟地址已经被占用，内核后续的运行如果需要申请虚拟地址只能从0xc010000开始</li>
-<li>通过以上分析可以得知，内核虚拟地址池的起始地址是0xc0100000，内核物理地址池的起始地址是0x00200000，所以如果内核第一次开始申请内存时，将返回0xc010000，而且会在内核页表中建立虚拟地址0xc010000到物理地址0x00200000的映射关系</li>
+<li>通过以上分析可以得知，内核虚拟地址池的起始地址是0xc0100000，内核物理地址池的起始地址是0x00200000，所以如果内核第一次开始申请内存时，将返回0xc010000，而且会在内核页表中建立虚拟地址0xc010000到物理地址0x00200000的映射关系。通过bochs调试命令可以查看页表映射关系，见下图</li>
 </ul>
+<p><img src="/images/IMG_0069.JPG" alt="IMG_0069.JPG"></p>
 <h4 id="内存布局"><a href="#内存布局" class="headerlink" title="内存布局"></a>内存布局</h4><p>​    完成本节后，系统的整体内存布局入下图</p>
 <p><img src="/images/45.png" alt="45.png"></p>
 
